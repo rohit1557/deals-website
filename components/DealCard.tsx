@@ -1,83 +1,100 @@
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { ExternalLink, Tag, Clock } from "lucide-react";
+import type { Deal } from "@/lib/types";
 
-export interface DealCardProps {
-  id: string;
-  title: string;
-  description?: string;
-  originalPrice: number;
-  discountedPrice: number;
-  discountPercent: number;
-  merchantName: string;
-  merchantLogoUrl?: string;
-  dealUrl: string;
-  isExpired?: boolean;
+function formatPrice(price: number | null) {
+  if (price == null) return null;
+  return `$${price.toFixed(2)}`;
 }
 
-export function DealCard({
-  title,
-  description,
-  originalPrice,
-  discountedPrice,
-  discountPercent,
-  merchantName,
-  merchantLogoUrl,
-  dealUrl,
-  isExpired = false,
-}: DealCardProps) {
+function timeUntilExpiry(expiresAt: Date | null): string | null {
+  if (!expiresAt) return null;
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return "Expired";
+  const hours = Math.floor(diff / 3_600_000);
+  if (hours < 24) return `${hours}h left`;
+  return `${Math.floor(hours / 24)}d left`;
+}
+
+const CATEGORY_STYLE: Record<string, { bg: string; emoji: string }> = {
+  Tech:    { bg: "from-blue-50 to-indigo-100",   emoji: "💻" },
+  Fashion: { bg: "from-pink-50 to-rose-100",      emoji: "👗" },
+  Home:    { bg: "from-amber-50 to-orange-100",   emoji: "🏠" },
+  Food:    { bg: "from-green-50 to-emerald-100",  emoji: "🍕" },
+  Travel:  { bg: "from-sky-50 to-cyan-100",       emoji: "✈️" },
+  Gaming:  { bg: "from-purple-50 to-violet-100",  emoji: "🎮" },
+  Beauty:  { bg: "from-fuchsia-50 to-pink-100",   emoji: "💄" },
+  Other:   { bg: "from-gray-50 to-slate-100",     emoji: "🏷️" },
+};
+
+export default function DealCard({ deal }: { deal: Deal }) {
+  const expiry  = timeUntilExpiry(deal.expiresAt);
+  const cat     = deal.category ?? "Other";
+  const style   = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE["Other"];
+  const showPct = deal.discountPct != null && deal.discountPct > 0;
+
   return (
     <a
-      href={dealUrl}
+      href={deal.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(
-        "group flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden",
-        isExpired && "opacity-50 pointer-events-none grayscale"
-      )}
+      className="group flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden"
     >
-      <div className="flex items-center gap-2 px-4 pt-4">
-        {merchantLogoUrl ? (
-          <Image
-            src={merchantLogoUrl}
-            alt={`${merchantName} logo`}
-            width={24}
-            height={24}
-            className="rounded-full object-contain"
+      {/* Image / placeholder */}
+      <div className={`relative h-40 bg-gradient-to-br ${style.bg} flex items-center justify-center overflow-hidden`}>
+        {deal.imageUrl ? (
+          <img
+            src={deal.imageUrl}
+            alt={deal.title}
+            className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform"
           />
         ) : (
-          <div className="h-6 w-6 rounded-full bg-zinc-100" />
+          <span className="text-5xl opacity-60 group-hover:scale-110 transition-transform">
+            {style.emoji}
+          </span>
         )}
-        <span className="text-xs font-medium text-zinc-500">{merchantName}</span>
-        {isExpired && (
-          <Badge variant="secondary" className="ml-auto text-xs">
-            Expired
-          </Badge>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-1 px-4 py-3">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 group-hover:text-indigo-600 transition-colors">
-          {title}
-        </h3>
-        {description && (
-          <p className="line-clamp-2 text-xs text-zinc-500">{description}</p>
+        {showPct && (
+          <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
+            -{deal.discountPct}%
+          </span>
         )}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-zinc-100 px-4 py-3">
-        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-xs font-bold">
-          -{discountPercent}%
-        </Badge>
-        <span className="text-base font-bold text-zinc-900">
-          ${discountedPrice.toFixed(2)}
-        </span>
-        <span className="ml-auto text-xs text-zinc-400 line-through">
-          ${originalPrice.toFixed(2)}
-        </span>
+      {/* Body */}
+      <div className="flex flex-col gap-2 p-4 flex-1">
+        <p className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">
+          {deal.title}
+        </p>
+
+        {/* Pricing */}
+        <div className="flex items-baseline gap-2">
+          {deal.dealPrice != null && (
+            <span className="text-lg font-bold text-green-600">
+              {formatPrice(deal.dealPrice)}
+            </span>
+          )}
+          {deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
+            <span className="text-sm text-gray-400 line-through">
+              {formatPrice(deal.originalPrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-auto flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-50">
+          <span className="flex items-center gap-1">
+            <Tag className="h-3 w-3" />
+            {cat}
+          </span>
+          <span className="capitalize">{deal.source}</span>
+          {expiry && (
+            <span className="flex items-center gap-1 text-amber-500">
+              <Clock className="h-3 w-3" />
+              {expiry}
+            </span>
+          )}
+          <ExternalLink className="h-3 w-3" />
+        </div>
       </div>
     </a>
   );
 }
-
-export default DealCard;
