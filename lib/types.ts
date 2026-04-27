@@ -1,3 +1,4 @@
+// Deal type — includes optional currency + discountPercentage fields
 export type Deal = {
   id: string;
   title: string;
@@ -10,6 +11,8 @@ export type Deal = {
   category: string | null;
   source: string | null;
   expiresAt: Date | null;
+  currency?: string;
+  discountPercentage?: number | null;
   isActive: boolean;
   createdAt: Date;
 };
