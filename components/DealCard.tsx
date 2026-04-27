@@ -1,5 +1,7 @@
+import type { MouseEvent } from "react";
 import { ExternalLink, Tag, Clock } from "lucide-react";
 import type { Deal } from "@/lib/types";
+
 
 const AMAZON_TAGS: Record<string, string> = {
   "amazon.com.au": "dealdrop0d5-22",
@@ -20,9 +22,14 @@ function affiliateUrl(url: string): string {
   return url;
 }
 
-function formatPrice(price: number | null) {
+function formatPrice(price: number | null, currency?: string): string | null {
   if (price == null) return null;
-  return `$${price.toFixed(2)}`;
+  const resolvedCurrency = currency?.trim() || "AUD";
+  return new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: resolvedCurrency,
+    minimumFractionDigits: 2,
+  }).format(price);
 }
 
 function timeUntilExpiry(expiresAt: Date | null): string | null {
@@ -46,17 +53,37 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string }> = {
 };
 
 export default function DealCard({ deal }: { deal: Deal }) {
-  const expiry  = timeUntilExpiry(deal.expiresAt);
-  const cat     = deal.category ?? "Other";
-  const style   = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE["Other"];
-  const showPct = deal.discountPct != null && deal.discountPct > 0;
+  const expiry     = timeUntilExpiry(deal.expiresAt);
+  const isExpired  = expiry === "Expired";
+  const cat        = deal.category ?? "Other";
+  const style      = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE["Other"];
+  // Prefer backend-supplied discountPercentage; fall back to client-side calc
+  const discountPct =
+    deal.discountPercentage != null
+      ? deal.discountPercentage
+      : deal.discountPct != null
+      ? deal.discountPct
+      : deal.originalPrice && deal.dealPrice && deal.originalPrice > 0
+      ? Math.round(((deal.originalPrice - deal.dealPrice) / deal.originalPrice) * 100)
+      : null;
+  const showPct = discountPct != null && discountPct > 0;
+
+  function handleClick(e: MouseEvent<HTMLAnchorElement>) {
+    if (isExpired) {
+      e.preventDefault();
+    }
+  }
 
   return (
     <a
-      href={affiliateUrl(deal.url)}
+      href={isExpired ? undefined : affiliateUrl(deal.url)}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+      aria-disabled={isExpired ? "true" : undefined}
+      onClick={handleClick}
+      className={`group flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm transition-shadow overflow-hidden ${
+        isExpired ? "opacity-60 cursor-not-allowed" : "hover:shadow-md"
+      }`}
     >
       {/* Image / placeholder */}
       <div className={`relative h-40 bg-gradient-to-br ${style.bg} flex items-center justify-center overflow-hidden`}>
@@ -73,7 +100,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
         )}
         {showPct && (
           <span className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow">
-            -{deal.discountPct}%
+            -{discountPct}%
           </span>
         )}
       </div>
@@ -88,12 +115,12 @@ export default function DealCard({ deal }: { deal: Deal }) {
         <div className="flex items-baseline gap-2">
           {deal.dealPrice != null && (
             <span className="text-lg font-bold text-green-600">
-              {formatPrice(deal.dealPrice)}
+              {formatPrice(deal.dealPrice, deal.currency)}
             </span>
           )}
           {deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
             <span className="text-sm text-gray-400 line-through">
-              {formatPrice(deal.originalPrice)}
+              {formatPrice(deal.originalPrice, deal.currency)}
             </span>
           )}
         </div>
