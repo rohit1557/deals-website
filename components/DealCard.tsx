@@ -1,10 +1,10 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-export type Deal = {
+export interface DealCardProps {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   originalPrice: number;
   discountedPrice: number;
   discountPercent: number;
@@ -12,77 +12,75 @@ export type Deal = {
   merchantLogoUrl?: string;
   dealUrl: string;
   expiresAt?: Date | null;
-};
+  isExpired?: boolean;
+}
 
-type DealCardProps = {
-  deal: Deal;
-  className?: string;
-};
-
-export default function DealCard({ deal, className }: DealCardProps) {
-  const isExpired = deal.expiresAt
-    ? new Date(deal.expiresAt) < new Date()
-    : false;
-
+export function DealCard({
+  title,
+  description,
+  originalPrice,
+  discountedPrice,
+  discountPercent,
+  merchantName,
+  merchantLogoUrl,
+  dealUrl,
+  isExpired = false,
+}: DealCardProps) {
   return (
     <article
       className={cn(
-        "relative flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden",
-        isExpired && "opacity-50 grayscale pointer-events-none",
-        className
+        "group relative flex flex-col rounded-2xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md overflow-hidden",
+        isExpired && "opacity-50 grayscale pointer-events-none"
       )}
     >
-      {/* Discount Badge */}
-      <div className="absolute top-3 left-3 z-10">
-        <span className="rounded-full bg-rose-500 px-2.5 py-1 text-xs font-bold text-white">
-          -{deal.discountPercent}%
+      <span className="absolute top-3 left-3 z-10 rounded-full bg-rose-500 px-2.5 py-0.5 text-xs font-semibold text-white">
+        -{discountPercent}%
+      </span>
+
+      {isExpired && (
+        <span className="absolute top-3 right-3 z-10 rounded-full bg-zinc-400 px-2.5 py-0.5 text-xs font-semibold text-white">
+          Expired
         </span>
-      </div>
+      )}
 
-      {/* Merchant Logo Slot */}
-      <div className="flex h-12 items-center px-4 pt-4">
-        {deal.merchantLogoUrl ? (
-          <Image
-            src={deal.merchantLogoUrl}
-            alt={deal.merchantName}
-            width={80}
-            height={32}
-            className="object-contain"
-          />
-        ) : (
-          <span className="text-sm font-medium text-zinc-500">
-            {deal.merchantName}
-          </span>
+      <div className="flex flex-col gap-3 p-4 pt-10">
+        <div className="flex items-center gap-2">
+          {merchantLogoUrl ? (
+            <Image
+              src={merchantLogoUrl}
+              alt={merchantName}
+              width={24}
+              height={24}
+              className="rounded-full object-contain"
+            />
+          ) : (
+            <div className="h-6 w-6 rounded-full bg-zinc-200" />
+          )}
+          <span className="text-xs font-medium text-zinc-500">{merchantName}</span>
+        </div>
+
+        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900">
+          {title}
+        </h3>
+
+        {description && (
+          <p className="line-clamp-2 text-xs text-zinc-500">{description}</p>
         )}
-      </div>
 
-      {/* Body */}
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <h2 className="line-clamp-2 text-base font-semibold leading-snug text-zinc-900">
-          {deal.title}
-        </h2>
-        <p className="line-clamp-3 text-sm text-zinc-500">
-          {deal.description}
-        </p>
-
-        {/* Pricing */}
-        <div className="mt-auto flex items-baseline gap-2 pt-3">
-          <span className="text-xl font-bold text-zinc-900">
-            ${deal.discountedPrice.toFixed(2)}
+        <div className="mt-auto flex items-baseline gap-2">
+          <span className="text-lg font-bold text-zinc-900">
+            ${discountedPrice.toFixed(2)}
           </span>
           <span className="text-sm text-zinc-400 line-through">
-            ${deal.originalPrice.toFixed(2)}
+            ${originalPrice.toFixed(2)}
           </span>
         </div>
-      </div>
 
-      {/* CTA */}
-      <div className="border-t border-zinc-100 px-4 py-3">
         <a
-          href={deal.dealUrl}
+          href={dealUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full rounded-xl bg-indigo-600 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="mt-1 block w-full rounded-xl bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
           Get Deal
         </a>
@@ -90,3 +88,5 @@ export default function DealCard({ deal, className }: DealCardProps) {
     </article>
   );
 }
+
+export default DealCard;
