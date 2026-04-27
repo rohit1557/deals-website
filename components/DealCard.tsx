@@ -1,3 +1,5 @@
+"use client";
+
 import type { MouseEvent } from "react";
 import { ExternalLink, Tag, Clock } from "lucide-react";
 import type { Deal } from "@/lib/types";
