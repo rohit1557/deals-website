@@ -25,8 +25,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           {children}
         </main>
-        <footer className="text-center text-xs text-gray-400 py-8">
-          DealDrop — deals aggregated from Slickdeals, RetailMeNot & DealNews
+        <footer className="border-t border-gray-100 mt-12 py-8 px-4">
+          <div className="mx-auto max-w-7xl space-y-2 text-center text-xs text-gray-400">
+            <p className="font-medium text-gray-500">DealDrop — Best deals aggregated hourly from across the web</p>
+            <p>
+              As an Amazon Associate I earn from qualifying purchases. Some links on this site are
+              affiliate links — if you buy through them, we may earn a small commission at no extra
+              cost to you.
+            </p>
+            <p>Prices and availability are accurate at time of posting and may change.</p>
+            <p className="pt-1">© {new Date().getFullYear()} DealDrop. Free to use — no subscription required.</p>
+          </div>
         </footer>
       </body>
     </html>
