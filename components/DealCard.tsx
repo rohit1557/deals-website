@@ -36,7 +36,6 @@ export function DealCard({
         isExpired && "opacity-50 pointer-events-none grayscale"
       )}
     >
-      {/* Merchant header */}
       <div className="flex items-center gap-2 px-4 pt-4">
         {merchantLogoUrl ? (
           <Image
@@ -57,7 +56,6 @@ export function DealCard({
         )}
       </div>
 
-      {/* Content */}
       <div className="flex flex-1 flex-col gap-1 px-4 py-3">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-zinc-900 group-hover:text-indigo-600 transition-colors">
           {title}
@@ -67,7 +65,6 @@ export function DealCard({
         )}
       </div>
 
-      {/* Pricing footer */}
       <div className="flex items-center gap-2 border-t border-zinc-100 px-4 py-3">
         <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-xs font-bold">
           -{discountPercent}%
