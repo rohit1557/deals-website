@@ -1,6 +1,25 @@
 import { ExternalLink, Tag, Clock } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
+const AMAZON_TAGS: Record<string, string> = {
+  "amazon.com.au": "dealdrop0d5-22",
+  "amazon.com":    "dealdrop0a7-20",
+};
+
+function affiliateUrl(url: string): string {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    for (const [domain, tag] of Object.entries(AMAZON_TAGS)) {
+      if (u.hostname.includes(domain)) {
+        u.searchParams.set("tag", tag);
+        return u.toString();
+      }
+    }
+  } catch {}
+  return url;
+}
+
 function formatPrice(price: number | null) {
   if (price == null) return null;
   return `$${price.toFixed(2)}`;
@@ -34,7 +53,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
   return (
     <a
-      href={deal.url}
+      href={affiliateUrl(deal.url)}
       target="_blank"
       rel="noopener noreferrer"
       className="group flex flex-col rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden"

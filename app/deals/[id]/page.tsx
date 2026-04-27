@@ -2,6 +2,23 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ExternalLink, ArrowLeft, Tag, Clock } from "lucide-react";
 
+const AMAZON_TAGS: Record<string, string> = {
+  "amazon.com.au": "dealdrop0d5-22",
+  "amazon.com":    "dealdrop0a7-20",
+};
+function affiliateUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    for (const [domain, tag] of Object.entries(AMAZON_TAGS)) {
+      if (u.hostname.includes(domain)) {
+        u.searchParams.set("tag", tag);
+        return u.toString();
+      }
+    }
+  } catch {}
+  return url;
+}
+
 interface Props {
   params: { id: string };
 }
@@ -65,7 +82,7 @@ export default async function DealPage({ params }: Props) {
           </div>
 
           <a
-            href={deal.url}
+            href={affiliateUrl(deal.url)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors"
