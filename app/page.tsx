@@ -3,12 +3,13 @@ import { db } from "@/lib/db";
 import DealCard from "@/components/DealCard";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilter from "@/components/CategoryFilter";
+import CountryFilter from "@/components/CountryFilter";
 import SortSelector from "@/components/SortSelector";
 import Pagination from "@/components/Pagination";
 import type { Deal } from "@/lib/types";
 
 interface PageProps {
-  searchParams: { q?: string; category?: string; sort?: string; page?: string; limit?: string };
+  searchParams: { q?: string; category?: string; sort?: string; page?: string; limit?: string; country?: string };
 }
 
 function getOrderBy(sort: string) {
@@ -26,10 +27,12 @@ async function getDeals(
   sort = "newest",
   page = 1,
   limit = 24,
+  country?: string,
 ): Promise<{ deals: Deal[]; total: number }> {
   const where = {
     isActive: true,
     ...(category ? { category } : {}),
+    ...(country  ? { country }  : {}),
     ...(search
       ? {
           OR: [
@@ -55,40 +58,39 @@ async function getDeals(
   };
 }
 
-async function getSiteStats() {
+async function getSiteStats(country?: string) {
+  const where = { isActive: true, ...(country ? { country } : {}) };
   const [active, sources, fresh] = await Promise.all([
-    db.deal.count({ where: { isActive: true } }),
-    db.deal.groupBy({ by: ["source"], where: { isActive: true } }).then((r) => r.length),
-    db.deal.count({
-      where: { isActive: true, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
-    }),
+    db.deal.count({ where }),
+    db.deal.groupBy({ by: ["source"], where }).then((r) => r.length),
+    db.deal.count({ where: { ...where, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } }),
   ]);
   return { active, sources, fresh };
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
-  const page  = Math.max(1, parseInt(searchParams.page  ?? "1",  10));
-  const limit = Math.min(96, Math.max(12, parseInt(searchParams.limit ?? "24", 10)));
-  const sort  = searchParams.sort ?? "newest";
+  const page    = Math.max(1, parseInt(searchParams.page  ?? "1",  10));
+  const limit   = Math.min(96, Math.max(12, parseInt(searchParams.limit ?? "24", 10)));
+  const sort    = searchParams.sort    ?? "newest";
+  const country = searchParams.country;
 
   const [{ deals, total }, stats] = await Promise.all([
-    getDeals(searchParams.q, searchParams.category, sort, page, limit),
-    getSiteStats(),
+    getDeals(searchParams.q, searchParams.category, sort, page, limit, country),
+    getSiteStats(country),
   ]);
 
-  const isFiltered = !!(searchParams.q || searchParams.category);
+  const isFiltered = !!(searchParams.q || searchParams.category || country);
 
   return (
     <div className="space-y-6">
       {/* ── Hero ── */}
       <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-indigo-900 p-6 text-white shadow-lg">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          🏷️ Today&apos;s Best <span className="text-orange-400">AU Deals</span>
+          🏷️ Today&apos;s Best <span className="text-orange-400">Deals</span>
         </h1>
         <p className="mt-1 text-slate-300 text-sm">
-          Handpicked from OzBargain and more — updated every hour.
+          Top deals from Australia &amp; India — updated every hour.
         </p>
-        {/* Stats strip */}
         <div className="mt-4 flex flex-wrap gap-4">
           <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2">
             <span className="text-2xl font-extrabold text-orange-400">{stats.active}</span>
@@ -105,6 +107,11 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
       </div>
 
+      {/* ── Country filter ── */}
+      <Suspense>
+        <CountryFilter />
+      </Suspense>
+
       {/* ── Controls ── */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Suspense>
@@ -118,14 +125,12 @@ export default async function HomePage({ searchParams }: PageProps) {
         <CategoryFilter />
       </Suspense>
 
-      {/* ── Results header ── */}
       {isFiltered && (
         <p className="text-sm text-gray-500">
           {total === 0 ? "No deals match your filters" : `${total} deal${total !== 1 ? "s" : ""} found`}
         </p>
       )}
 
-      {/* ── Grid ── */}
       {deals.length === 0 ? (
         <div className="text-center py-24 text-gray-400">
           <p className="text-5xl mb-4">🔍</p>
