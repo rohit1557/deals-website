@@ -12,7 +12,7 @@ const EMOJI: Record<string, string> = {
 export default function CategoryFilter() {
   const router = useRouter();
   const params = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const active = params.get("category") ?? "";
 
   const toggle = (cat: string) => {
@@ -22,11 +22,12 @@ export default function CategoryFilter() {
     } else {
       next.set("category", cat);
     }
+    next.delete("page");
     startTransition(() => router.push(`/?${next.toString()}`));
   };
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className={clsx("flex flex-wrap gap-2 transition-opacity", isPending && "opacity-60 pointer-events-none")}>
       {CATEGORIES.map((cat) => (
         <button
           key={cat}
