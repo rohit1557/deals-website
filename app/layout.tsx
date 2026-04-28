@@ -62,6 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <a href="/privacy" className="text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
               <span className="text-slate-700">·</span>
               <a href="/terms"   className="text-slate-400 hover:text-white transition-colors">Terms of Use</a>
+              <span className="text-slate-700">·</span>
+              <a href="/contact" className="text-slate-400 hover:text-white transition-colors">Contact</a>
             </div>
 
             <div className="border-t border-slate-800 pt-6 space-y-2 text-center text-xs text-slate-500">
