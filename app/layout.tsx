@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "DealDrop — Best AU Deals in One Place",
-  description: "Find the hottest Australian promo deals aggregated from OzBargain and more, updated hourly.",
+  description: "Find great Australian promo deals aggregated from OzBargain and more, updated hourly.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
