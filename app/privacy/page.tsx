@@ -49,12 +49,10 @@ export default function PrivacyPage() {
         the privacy practices of those websites and encourage you to read their privacy policies.
       </p>
 
-      <h2>Your rights (Australian Privacy Act 1988)</h2>
-      <p>
-        Under the Australian Privacy Act 1988, you have the right to access and correct
-        personal information we hold about you. As we do not collect personal information
-        beyond server logs, there is typically nothing to access or correct.
-      </p>
+      <h2>Your rights</h2>
+      <p><strong>Australia (Privacy Act 1988):</strong> You have the right to access and correct personal information we hold about you.</p>
+      <p><strong>India (DPDP Act 2023):</strong> You have the right to access, correct, and erase personal data we hold. As we do not actively collect personal data beyond server logs, there is typically nothing to action.</p>
+      <p>In all cases, as we do not collect personal information beyond server logs, there is typically nothing to access or correct.</p>
       <p>
         If you have a privacy concern, please use the contact details provided when you
         were directed to this site.
