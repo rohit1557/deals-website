@@ -82,7 +82,7 @@ export default async function HomePage({ searchParams }: PageProps) {
     <div className="space-y-6">
       {/* ── Hero ── */}
       <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-indigo-900 p-6 text-white shadow-lg">
-        <h1 className="text-3xl font-extrabold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
           🏷️ Today&apos;s Best <span className="text-orange-400">AU Deals</span>
         </h1>
         <p className="mt-1 text-slate-300 text-sm">
