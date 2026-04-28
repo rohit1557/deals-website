@@ -12,9 +12,15 @@ export default function PrivacyPage() {
 
       <h2>Who we are</h2>
       <p>
-        DealDrop is an Australian deals aggregation website that collects and displays
+        DealDrop is an Australian deals aggregation website operated by{" "}
+        <strong>[INSERT LEGAL NAME / ABN]</strong>. It collects and displays
         promotional deals sourced from public feeds including OzBargain and Reddit
         r/AusDeals. We do not sell products directly.
+      </p>
+      <p className="text-sm bg-amber-50 border border-amber-200 rounded p-3 text-amber-800">
+        <strong>Action required:</strong> Replace [INSERT LEGAL NAME / ABN] above with your
+        full legal name or registered business name and ABN. This is required under the
+        Australian Privacy Act 1988 to identify the data controller.
       </p>
 
       <h2>What data we collect</h2>
