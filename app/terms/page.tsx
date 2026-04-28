@@ -37,6 +37,16 @@ export default function TermsPage() {
         third-party feeds, errors may occur. If you notice an inaccurate price, please
         contact us so we can correct it promptly.
       </p>
+      <h2>Discount percentages (ACL Section 29)</h2>
+      <p>
+        Where a discount percentage is shown (e.g. &quot;−40% OFF&quot;), it is calculated from
+        the original price listed in the deal source at the time of posting. This original
+        price may reflect a manufacturer&apos;s recommended retail price (RRP), a previous
+        sale price, or the price listed by the deal submitter — DealDrop cannot
+        independently verify that the original price was charged immediately prior to the
+        discount. We recommend confirming the current and historical price on the
+        retailer&apos;s website before relying on any stated saving.
+      </p>
 
       <h2>Affiliate disclosure</h2>
       <p>
