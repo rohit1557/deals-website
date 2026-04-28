@@ -52,15 +52,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <span className="text-white">Drop</span>
                 </span>
               </a>
-              <p className="text-slate-400 text-xs">Best Australian deals, aggregated hourly from OzBargain and more.</p>
-            </div>
-            <div className="border-t border-slate-800 pt-6 space-y-2 text-center text-xs text-slate-500">
-              <p>
-                As an Amazon Associate I earn from qualifying purchases. Some links are affiliate links —
-                we may earn a small commission at no extra cost to you.
+              <p className="text-slate-400 text-xs text-center sm:text-right">
+                Best Australian deals, aggregated hourly from OzBargain and more.
               </p>
-              <p>Prices and availability are accurate at time of posting and may change.</p>
-              <p className="text-slate-600 pt-1">© {new Date().getFullYear()} DealDrop · Free to use</p>
+            </div>
+
+            {/* Legal links */}
+            <div className="flex flex-wrap justify-center gap-4 mb-6 text-xs">
+              <a href="/privacy" className="text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
+              <span className="text-slate-700">·</span>
+              <a href="/terms"   className="text-slate-400 hover:text-white transition-colors">Terms of Use</a>
+            </div>
+
+            <div className="border-t border-slate-800 pt-6 space-y-2 text-center text-xs text-slate-500">
+              <p className="font-medium text-slate-400">Affiliate Disclosure</p>
+              <p>
+                As an Amazon Associate I earn from qualifying purchases. Some links on this site are
+                affiliate links — if you buy through them, we may earn a small commission at no extra
+                cost to you.
+              </p>
+              <p>Prices and availability are accurate at time of posting and may change. Always verify on the retailer&apos;s website.</p>
+              <p className="text-slate-600 pt-2">© {new Date().getFullYear()} DealDrop · Free to use · 🇦🇺 Australia</p>
             </div>
           </div>
         </footer>
