@@ -143,6 +143,8 @@ export default function DealCard({ deal }: { deal: Deal }) {
             {style.emoji} {cat}
           </span>
           <div className="flex items-center gap-2 text-xs text-gray-400">
+            {deal.country === "IN" && <span title="India">🇮🇳</span>}
+            {deal.country === "AU" && <span title="Australia">🇦🇺</span>}
             {expiry && expiry !== "Expired" && (
               <span className="flex items-center gap-1 text-amber-500 font-medium">
                 <Clock className="h-3 w-3" />
