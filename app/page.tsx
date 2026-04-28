@@ -52,7 +52,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Today&apos;s Best Deals</h1>
         <p className="text-sm text-gray-500 mt-1">
-          {deals.length} active deals — updated hourly
+          {totalActive} active deals — updated hourly
         </p>
       </div>
 
