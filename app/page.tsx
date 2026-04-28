@@ -41,22 +41,29 @@ async function getDeals(
   };
 
   const [rows, total] = await Promise.all([
-    db.deal.findMany({
-      where,
-      orderBy: getOrderBy(sort),
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
+    db.deal.findMany({ where, orderBy: getOrderBy(sort), skip: (page - 1) * limit, take: limit }),
     db.deal.count({ where }),
   ]);
 
-  const deals = rows.map((d) => ({
-    ...d,
-    originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
-    dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
-  })) as Deal[];
+  return {
+    deals: rows.map((d) => ({
+      ...d,
+      originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
+      dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
+    })) as Deal[],
+    total,
+  };
+}
 
-  return { deals, total };
+async function getSiteStats() {
+  const [active, sources, fresh] = await Promise.all([
+    db.deal.count({ where: { isActive: true } }),
+    db.deal.groupBy({ by: ["source"], where: { isActive: true } }).then((r) => r.length),
+    db.deal.count({
+      where: { isActive: true, createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+    }),
+  ]);
+  return { active, sources, fresh };
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
@@ -64,24 +71,42 @@ export default async function HomePage({ searchParams }: PageProps) {
   const limit = Math.min(96, Math.max(12, parseInt(searchParams.limit ?? "24", 10)));
   const sort  = searchParams.sort ?? "newest";
 
-  const { deals, total } = await getDeals(
-    searchParams.q,
-    searchParams.category,
-    sort,
-    page,
-    limit,
-  );
+  const [{ deals, total }, stats] = await Promise.all([
+    getDeals(searchParams.q, searchParams.category, sort, page, limit),
+    getSiteStats(),
+  ]);
+
+  const isFiltered = !!(searchParams.q || searchParams.category);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Today&apos;s Best Deals</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          {total} active deals — updated hourly
+      {/* ── Hero ── */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-indigo-900 p-6 text-white shadow-lg">
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          🏷️ Today&apos;s Best <span className="text-orange-400">AU Deals</span>
+        </h1>
+        <p className="mt-1 text-slate-300 text-sm">
+          Handpicked from OzBargain and more — updated every hour.
         </p>
+        {/* Stats strip */}
+        <div className="mt-4 flex flex-wrap gap-4">
+          <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2">
+            <span className="text-2xl font-extrabold text-orange-400">{stats.active}</span>
+            <span className="text-xs text-slate-300 leading-tight">active<br/>deals</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2">
+            <span className="text-2xl font-extrabold text-emerald-400">{stats.fresh}</span>
+            <span className="text-xs text-slate-300 leading-tight">added<br/>today</span>
+          </div>
+          <div className="flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2">
+            <span className="text-2xl font-extrabold text-sky-400">{stats.sources}</span>
+            <span className="text-xs text-slate-300 leading-tight">live<br/>sources</span>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* ── Controls ── */}
+      <div className="flex flex-col sm:flex-row gap-3">
         <Suspense>
           <SearchBar />
         </Suspense>
@@ -93,11 +118,19 @@ export default async function HomePage({ searchParams }: PageProps) {
         <CategoryFilter />
       </Suspense>
 
+      {/* ── Results header ── */}
+      {isFiltered && (
+        <p className="text-sm text-gray-500">
+          {total === 0 ? "No deals match your filters" : `${total} deal${total !== 1 ? "s" : ""} found`}
+        </p>
+      )}
+
+      {/* ── Grid ── */}
       {deals.length === 0 ? (
         <div className="text-center py-24 text-gray-400">
-          <p className="text-4xl mb-4">🔍</p>
-          <p className="font-medium">No deals found</p>
-          <p className="text-sm">Try a different search or category</p>
+          <p className="text-5xl mb-4">🔍</p>
+          <p className="font-semibold text-gray-600">No deals found</p>
+          <p className="text-sm mt-1">Try a different search or category</p>
         </div>
       ) : (
         <>
