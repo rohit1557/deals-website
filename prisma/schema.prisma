@@ -18,6 +18,8 @@ model Deal {
   discountPct   Int?      @map("discount_pct")
   category      String?
   source        String?
+  currency      String?   @default("AUD")
+  country       String?   @default("AU")
   expiresAt     DateTime? @map("expires_at")
   isActive      Boolean   @default(true) @map("is_active")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -25,5 +27,6 @@ model Deal {
 
   @@index([category])
   @@index([isActive, createdAt(sort: Desc)])
+  @@index([country])
   @@map("deals")
 }
