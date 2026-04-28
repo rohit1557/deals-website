@@ -24,7 +24,7 @@ async function getDeals(search?: string, category?: string): Promise<Deal[]> {
         : {}),
     },
     orderBy: { createdAt: "desc" },
-    take: 48,
+    take: 200,
   });
   // Prisma Decimal → number coercion for the client type
   return deals.map((d) => ({
@@ -34,8 +34,17 @@ async function getDeals(search?: string, category?: string): Promise<Deal[]> {
   })) as Deal[];
 }
 
+async function getActiveCount(category?: string): Promise<number> {
+  return db.deal.count({
+    where: { isActive: true, ...(category ? { category } : {}) },
+  });
+}
+
 export default async function HomePage({ searchParams }: PageProps) {
-  const deals = await getDeals(searchParams.q, searchParams.category);
+  const [deals, totalActive] = await Promise.all([
+    getDeals(searchParams.q, searchParams.category),
+    getActiveCount(searchParams.category),
+  ]);
 
   return (
     <div className="space-y-6">
