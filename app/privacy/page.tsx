@@ -62,8 +62,8 @@ export default function PrivacyPage() {
         beyond server logs, there is typically nothing to access or correct.
       </p>
       <p>
-        If you have a privacy concern, contact us at{" "}
-        <a href="mailto:privacy@dealdrop.com.au">privacy@dealdrop.com.au</a>.
+        If you have a privacy concern, please use the contact details provided when you
+        were directed to this site.
       </p>
 
       <h2>Changes to this policy</h2>
