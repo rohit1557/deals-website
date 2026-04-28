@@ -99,8 +99,8 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions about these terms:{" "}
-        <a href="mailto:legal@dealdrop.com.au">legal@dealdrop.com.au</a>
+        Questions about these terms can be directed to the site operator via the contact
+        details provided when you were directed to this site.
       </p>
     </div>
   );
