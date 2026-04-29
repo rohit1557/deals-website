@@ -24,11 +24,12 @@ function rankLabel(rank: number): string {
 
 function cleanTitle(title: string): string {
   return title
-    .replace(/\s*-?\s*down\s+[\d.]+%/gi, "")       // remove "down X%"
-    .replace(/\s*\([\d.]+%\s+off\)/gi, "")          // remove "(X% off)"
-    .replace(/\s*\(\$[\d,]+\.?\d*[^)]*\)/g, "")     // remove "($448.00...)"
-    .replace(/\s*\[[^\]]*\]/g, "")                    // remove all [...] metadata
-    .replace(/\s*\.{2,}$/, "")                       // remove trailing ...
+    .replace(/\s*-?\s*down\s+[\d.]+%/gi, "")        // remove "down X%"
+    .replace(/\s*\([\d.]+%\s+off\)/gi, "")           // remove "(X% off)"
+    .replace(/\s*\(\$[\d,]+\.?\d*[^)]*\)/g, "")      // remove "($448.00...)"
+    .replace(/\s*\[[^\]]*\]?/g, "")                  // remove [...] even if unclosed
+    .replace(/\s+to\s+\$[\d,]+\.?\d*.*$/i, "")       // remove "to $1,699..."
+    .replace(/\s*\.{2,}$/, "")                        // remove trailing ...
     .replace(/\s+/g, " ")
     .trim();
 }

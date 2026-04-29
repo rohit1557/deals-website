@@ -1,13 +1,13 @@
 import * as fs from "fs";
 
 const CATEGORY_PROMPTS: Record<string, string> = {
-  Tech:    "Ultra-modern tech workspace, glowing screens, dark ambient lighting, blue and purple neon accents, cinematic 4K photography, no people, no text",
-  Gaming:  "Epic gaming setup with RGB rainbow lighting, dark room, multiple monitors glowing, cinematic dramatic lighting, no people, no text",
-  Home:    "Luxurious modern living room interior, warm golden hour lighting, Scandinavian minimal style, cozy atmosphere, no people, no text",
-  Fashion: "High-fashion editorial flat lay, luxury fabrics, neutral beige and gold tones, elegant minimal composition, no text",
-  Beauty:  "Luxury beauty and skincare products, soft pink marble surface, golden light, elegant aesthetic, no text",
-  Travel:  "Breathtaking aerial travel landscape, vibrant tropical colors, crystal blue water, lush greenery, cinematic drone shot, no text",
-  Other:   "Vibrant colorful abstract background, dynamic diagonal shapes, rich jewel tones, modern graphic design aesthetic, no text",
+  Tech:    "Sleek smartphone and laptop on dark desk, soft blue neon lighting, bokeh background, cinematic product photography, no people, no text, no words",
+  Gaming:  "Epic gaming setup with RGB rainbow lighting, dark room, glowing keyboard and monitor, cinematic dramatic shot, no people, no text, no words",
+  Home:    "Luxurious modern living room, warm golden lighting, Scandinavian minimal style, cozy atmosphere, no people, no text, no words",
+  Fashion: "High-fashion editorial flat lay, luxury fabrics, neutral beige and gold tones, elegant minimal composition, no text, no words",
+  Beauty:  "Luxury skincare products on pink marble, soft golden light, elegant aesthetic, no text, no words",
+  Travel:  "Breathtaking aerial tropical landscape, crystal blue water, lush greenery, cinematic drone shot, no text, no words",
+  Other:   "Vibrant colorful shopping bags and products, dynamic composition, bright modern aesthetic, no text, no words",
 };
 
 export async function generateBackground(
