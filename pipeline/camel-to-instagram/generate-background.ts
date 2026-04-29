@@ -24,13 +24,13 @@ export async function generateBackground(
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: { sampleCount: 1, aspectRatio: "1:1" },
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ["IMAGE"] },
         }),
       },
     );
@@ -42,12 +42,16 @@ export async function generateBackground(
     }
 
     const data = await res.json() as {
-      predictions?: Array<{ bytesBase64Encoded?: string }>;
+      candidates?: Array<{
+        content?: { parts?: Array<{ inlineData?: { data: string } }> };
+      }>;
     };
 
-    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    const b64 = parts.find(p => p.inlineData?.data)?.inlineData?.data;
+
     if (!b64) {
-      console.warn("[generate-background] No image data in Imagen response");
+      console.warn("[generate-background] No image data in Gemini response");
       return false;
     }
 
