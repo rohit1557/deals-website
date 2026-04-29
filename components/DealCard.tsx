@@ -49,7 +49,12 @@ function isNew(createdAt: Date): boolean {
 }
 
 // Detect cashback/referral/promo deals that have misleading RRP savings
-function getPromoType(title: string, description?: string | null): string | null {
+function getPromoType(title: string, description?: string | null, url?: string): string | null {
+  // URL-based detection is most reliable — /join/, /refer/, ?ref= etc.
+  if (url) {
+    const u = url.toLowerCase();
+    if (/\/(join|refer|referral|invite|enroll)\//.test(u)) return "Referral Bonus";
+  }
   const text = `${title} ${description ?? ""}`.toLowerCase();
   if (/referral|refer[\s-]a[\s-]friend|refer[\s-]and[\s-]earn/.test(text)) return "Referral Bonus";
   if (/cashback|cash[\s-]back/.test(text)) return "Cashback";
@@ -97,7 +102,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const fresh     = isNew(deal.createdAt);
   const cat       = deal.category ?? "Other";
   const style     = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE["Other"];
-  const promoType = getPromoType(deal.title, deal.description);
+  const promoType = getPromoType(deal.title, deal.description, deal.url);
   const isPromo   = promoType !== null;
 
   const discountPct = isPromo ? null

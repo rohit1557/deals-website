@@ -92,9 +92,15 @@ async function getTopDeals(country?: string): Promise<Deal[]> {
     take: 15,
   });
 
+  const REFERRAL_URL_PATTERNS = ["/join/", "/refer/", "/referral/", "/invite/", "/enroll/"];
+
   const genuine = rows.filter((d) => {
     const text = d.title.toLowerCase();
-    return !PROMO_TERMS.some((t) => text.includes(t));
+    const url  = d.url.toLowerCase();
+    return (
+      !PROMO_TERMS.some((t) => text.includes(t)) &&
+      !REFERRAL_URL_PATTERNS.some((p) => url.includes(p))
+    );
   });
 
   return genuine.slice(0, 3).map((d) => ({
