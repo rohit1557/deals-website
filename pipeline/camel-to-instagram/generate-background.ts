@@ -24,13 +24,13 @@ export async function generateBackground(
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ["IMAGE"] },
+          instances: [{ prompt }],
+          parameters: { sampleCount: 1, aspectRatio: "1:1" },
         }),
       },
     );
@@ -42,20 +42,16 @@ export async function generateBackground(
     }
 
     const data = await res.json() as {
-      candidates?: Array<{
-        content?: { parts?: Array<{ inlineData?: { mimeType: string; data: string } }> };
-      }>;
+      predictions?: Array<{ bytesBase64Encoded?: string }>;
     };
 
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find(p => p.inlineData?.data);
-
-    if (!imagePart?.inlineData?.data) {
-      console.warn("[generate-background] No image data in Gemini response");
+    const b64 = data.predictions?.[0]?.bytesBase64Encoded;
+    if (!b64) {
+      console.warn("[generate-background] No image data in Imagen response");
       return false;
     }
 
-    fs.writeFileSync(outputPath, Buffer.from(imagePart.inlineData.data, "base64"));
+    fs.writeFileSync(outputPath, Buffer.from(b64, "base64"));
     console.log(`[generate-background] Gemini generated background for "${category}"`);
     return true;
   } catch (err) {
