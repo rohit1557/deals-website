@@ -15,6 +15,7 @@ export type Deal = {
   expiresAt: Date | null;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
 };
 
 export type Category =

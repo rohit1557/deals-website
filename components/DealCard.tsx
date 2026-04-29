@@ -68,19 +68,30 @@ const SOURCE_LABELS: Record<string, string> = {
   indiadeals:  "r/IndiaDeals",
 };
 
-// Community-sourced = user-submitted deals that have been upvoted/visible
 const COMMUNITY_SOURCES = new Set(["ozbargain", "slickdeals", "dealnews", "retailmenot", "indiadeals"]);
 
-function getSourceBadge(deal: Deal): { text: string; className: string } | null {
-  const src = deal.source?.toLowerCase() ?? "";
-  // Price checked: we have both a deal price and original price from the retailer
+function getSourceBadge(deal: Deal): { text: string; className: string } {
+  const hoursAgo = (Date.now() - new Date(deal.updatedAt).getTime()) / 3_600_000;
+
+  // Stale data — price likely differs from what we scraped
+  if (hoursAgo > 6) {
+    return { text: "Verify price", className: "text-amber-500" };
+  }
   if (deal.dealPrice != null && deal.originalPrice != null && deal.originalPrice > deal.dealPrice) {
     return { text: "Price checked", className: "text-emerald-600" };
   }
-  if (COMMUNITY_SOURCES.has(src)) {
+  if (COMMUNITY_SOURCES.has(deal.source?.toLowerCase() ?? "")) {
     return { text: "Verified", className: "text-blue-500" };
   }
-  return null;
+  return { text: "Verified", className: "text-blue-500" };
+}
+
+function priceAge(updatedAt: Date): string {
+  const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string }> = {
@@ -122,6 +133,8 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
   const sourceLabel  = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
   const sourceBadge  = getSourceBadge(deal);
+  const ageLabel     = priceAge(deal.updatedAt);
+  const isStale      = (Date.now() - new Date(deal.updatedAt).getTime()) / 3_600_000 > 6;
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     if (expired) e.preventDefault();
@@ -224,17 +237,15 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
         {/* Footer */}
         <div className="mt-2 pt-2.5 border-t border-gray-50 space-y-2">
-          {/* Source — more prominent */}
+          {/* Source row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm">{deal.country === "IN" ? "🇮🇳" : "🇦🇺"}</span>
               <span className="text-xs font-semibold text-gray-700 truncate">{sourceLabel}</span>
-              {sourceBadge && (
-                <span className={`flex items-center gap-0.5 text-[10px] font-medium ${sourceBadge.className} shrink-0`}>
-                  <CheckCircle className="h-2.5 w-2.5" />
-                  {sourceBadge.text}
-                </span>
-              )}
+              <span className={`flex items-center gap-0.5 text-[10px] font-medium ${sourceBadge.className} shrink-0`}>
+                <CheckCircle className="h-2.5 w-2.5" />
+                {sourceBadge.text}
+              </span>
             </div>
             {expiry && expiry !== "Expired" && (
               <span className="flex items-center gap-1 text-[11px] text-amber-500 font-medium shrink-0">
@@ -244,6 +255,13 @@ export default function DealCard({ deal }: { deal: Deal }) {
             )}
             {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
+
+          {/* Stale price warning */}
+          {isStale && !expired && (
+            <p className="text-[10px] text-amber-600 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
+              Price last checked {ageLabel} — verify on retailer site before buying.
+            </p>
+          )}
 
           {/* CTA */}
           <div
