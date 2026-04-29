@@ -1,11 +1,6 @@
-import Parser from "rss-parser";
+import { Client } from "pg";
 
 const AFFILIATE_TAG = process.env.AFFILIATE_TAG ?? "dealdrop0d5-22";
-
-const FEEDS = [
-  "https://au.camelcamelcamel.com/top_drops/feed",
-  "https://camelcamelcamel.com/top_drops/feed",
-];
 
 export interface RawDeal {
   title: string;
@@ -18,69 +13,46 @@ export interface RawDeal {
   description: string;
 }
 
-function extractAsin(link: string): string | null {
-  const m = link.match(/\/product\/([A-Z0-9]{10})\b/);
+function extractAsin(url: string): string | null {
+  const m = url.match(/\/dp\/([A-Z0-9]{10})\b/);
   return m ? m[1] : null;
 }
 
-function parsePrices(text: string): { deal: number | null; was: number | null; drop: number | null } {
-  const nowM  = text.match(/[Nn]ow[:\s]+\$?([\d,]+\.?\d*)/);
-  const wasM  = text.match(/[Ww]as[:\s]+\$?([\d,]+\.?\d*)/);
-  const dropM = text.match(/[Dd]rop[:\s]+(\d+)%/);
-  return {
-    deal: nowM  ? parseFloat(nowM[1].replace(/,/g, ""))  : null,
-    was:  wasM  ? parseFloat(wasM[1].replace(/,/g, ""))  : null,
-    drop: dropM ? parseInt(dropM[1], 10) : null,
-  };
-}
-
-function cleanTitle(title: string): string {
-  return title.replace(/^Price\s+Drop[:\s]+/i, "").trim();
-}
-
 export async function fetchDeals(): Promise<RawDeal[]> {
-  const parser = new Parser({ timeout: 15000 });
+  const client = new Client({ connectionString: process.env.DATABASE_URL });
+  await client.connect();
 
-  for (const feedUrl of FEEDS) {
-    try {
-      const feed = await parser.parseURL(feedUrl);
-      const deals: RawDeal[] = [];
+  try {
+    const result = await client.query(`
+      SELECT title, url, deal_price, original_price, discount_pct, created_at, description
+      FROM deals
+      WHERE is_active = true
+        AND source = 'camelcamelcamel'
+        AND discount_pct >= 20
+        AND url ~ '/dp/[A-Z0-9]{10}'
+      ORDER BY discount_pct DESC
+      LIMIT 20
+    `);
 
-      for (const item of feed.items ?? []) {
-        const link = item.link ?? "";
-        const asin = extractAsin(link);
-        if (!asin) continue;
-
-        const title = cleanTitle(item.title ?? "");
-        const desc  = item.contentSnippet ?? item.content ?? "";
-        const text  = `${desc} ${title}`;
-        const { deal, was, drop } = parsePrices(text);
-
-        // Require at least a deal price to be useful
-        if (!deal) continue;
-
-        const computedDrop = drop ?? (
-          was && was > deal ? Math.round((1 - deal / was) * 100) : null
-        );
-
-        deals.push({
-          title,
-          asin,
-          amazonUrl: `https://www.amazon.com.au/dp/${asin}?tag=${AFFILIATE_TAG}`,
-          dealPrice: deal,
-          originalPrice: was,
-          dropPct: computedDrop,
-          pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
-          description: desc,
-        });
-      }
-
-      console.log(`[fetch-deals] Got ${deals.length} deals from ${feedUrl}`);
-      return deals;
-    } catch (err) {
-      console.warn(`[fetch-deals] Feed ${feedUrl} failed: ${err}`);
+    const deals: RawDeal[] = [];
+    for (const row of result.rows) {
+      const asin = extractAsin(row.url);
+      if (!asin) continue;
+      deals.push({
+        title: row.title,
+        asin,
+        amazonUrl: `https://www.amazon.com.au/dp/${asin}?tag=${AFFILIATE_TAG}`,
+        dealPrice: row.deal_price ? Number(row.deal_price) : null,
+        originalPrice: row.original_price ? Number(row.original_price) : null,
+        dropPct: row.discount_pct,
+        pubDate: new Date(row.created_at),
+        description: row.description ?? "",
+      });
     }
-  }
 
-  return [];
+    console.log(`[fetch-deals] Got ${deals.length} CCC deals from database`);
+    return deals;
+  } finally {
+    await client.end();
+  }
 }
