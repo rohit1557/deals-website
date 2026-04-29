@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 72px;
+    overflow: hidden;
+  }
+
+  /* Brand bar */
+  .brand {
+    position: absolute;
+    top: 44px;
+    left: 72px;
+    right: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand-name {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .brand-site {
+    font-size: 18px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+  }
+
+  /* Main content */
+  .content {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .rank-badge {
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 10px 28px;
+    border-radius: 100px;
+  }
+
+  .deal-title {
+    font-size: 46px;
+    font-weight: 800;
+    line-height: 1.15;
+    text-align: center;
+    max-width: 900px;
+    /* Gradient text */
+    background: linear-gradient(90deg, #fff 0%, #e0e7ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .price-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    margin-top: 8px;
+  }
+
+  .deal-price {
+    font-size: 88px;
+    font-weight: 900;
+    letter-spacing: -3px;
+    color: #4ade80;
+    line-height: 1;
+  }
+
+  .price-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .was-price {
+    font-size: 28px;
+    color: rgba(255,255,255,0.45);
+    text-decoration: line-through;
+    font-weight: 600;
+  }
+
+  .drop-badge {
+    background: #ef4444;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 900;
+    padding: 6px 18px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  .cta {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-size: 26px;
+    font-weight: 700;
+    padding: 18px 56px;
+    border-radius: 16px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.4);
+  }
+
+  .source-tag {
+    position: absolute;
+    bottom: 44px;
+    left: 72px;
+    right: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 500;
+  }
+
+  /* Decorative blobs */
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+  .blob-1 { width: 500px; height: 500px; background: #6366f1; top: -150px; right: -100px; }
+  .blob-2 { width: 400px; height: 400px; background: #a855f7; bottom: -100px; left: -80px; }
+  .blob-3 { width: 300px; height: 300px; background: #22d3ee; bottom: 100px; right: 50px; }
+</style>
+</head>
+<body>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="brand">
+    <span class="brand-name">DealDrop</span>
+    <span class="brand-site">dealdrop.au</span>
+  </div>
+
+  <div class="content">
+    <div class="rank-badge" id="rank-badge">Deal of the Day</div>
+
+    <div class="deal-title" id="deal-title">Loading...</div>
+
+    <div class="price-block">
+      <div class="deal-price" id="deal-price">$0</div>
+      <div class="price-detail">
+        <div class="was-price" id="was-price" style="display:none">was $0</div>
+        <div class="drop-badge" id="drop-badge" style="display:none">-0% OFF</div>
+      </div>
+    </div>
+
+    <div class="cta">Link in bio → dealdrop.au</div>
+  </div>
+
+  <div class="source-tag">
+    Price drop data by CamelCamelCamel &nbsp;•&nbsp; Amazon Australia
+  </div>
+</body>
+</html>
