@@ -27,7 +27,7 @@ function cleanTitle(title: string): string {
     .replace(/\s*-?\s*down\s+[\d.]+%/gi, "")       // remove "down X%"
     .replace(/\s*\([\d.]+%\s+off\)/gi, "")          // remove "(X% off)"
     .replace(/\s*\(\$[\d,]+\.?\d*[^)]*\)/g, "")     // remove "($448.00...)"
-    .replace(/\s*\[[^\]]{0,30}\]/g, "")              // remove short [...] metadata
+    .replace(/\s*\[[^\]]*\]/g, "")                    // remove all [...] metadata
     .replace(/\s*\.{2,}$/, "")                       // remove trailing ...
     .replace(/\s+/g, " ")
     .trim();

@@ -1,36 +1,36 @@
 import * as fs from "fs";
 
-// Unsplash source API — free, no API key needed, returns random relevant photos
-const CATEGORY_QUERIES: Record<string, string> = {
-  Tech:    "technology gadget minimal dark",
-  Gaming:  "gaming setup rgb lights",
-  Home:    "modern home interior cozy",
-  Fashion: "fashion style minimal",
-  Beauty:  "beauty skincare luxury",
-  Travel:  "travel landscape aerial",
-  Other:   "shopping deal sale colorful",
+// Picsum Photos — free, no API key, reliable, beautiful photos
+// Using category-specific seeds so each category gets a consistent photo style
+const CATEGORY_SEEDS: Record<string, number> = {
+  Tech:    10,
+  Gaming:  42,
+  Home:    67,
+  Fashion: 84,
+  Beauty:  91,
+  Travel:  15,
+  Other:   33,
 };
 
 export async function generateBackground(
   category: string,
   outputPath: string,
 ): Promise<boolean> {
-  const query = CATEGORY_QUERIES[category] ?? CATEGORY_QUERIES["Other"];
-  const encoded = encodeURIComponent(query);
+  const seed = CATEGORY_SEEDS[category] ?? CATEGORY_SEEDS["Other"];
 
   try {
-    // Unsplash Source — returns a random photo matching the query, 1080x1080
-    const url = `https://source.unsplash.com/1080x1080/?${encoded}`;
+    // picsum.photos/seed/N/W/H — deterministic beautiful photo by seed
+    const url = `https://picsum.photos/seed/${seed}/1080/1080`;
     const res = await fetch(url, { redirect: "follow" });
 
     if (!res.ok) {
-      console.warn("[generate-background] Unsplash returned", res.status);
+      console.warn("[generate-background] Picsum returned", res.status);
       return false;
     }
 
     const buffer = Buffer.from(await res.arrayBuffer());
     fs.writeFileSync(outputPath, buffer);
-    console.log(`[generate-background] Saved Unsplash background for "${category}"`);
+    console.log(`[generate-background] Saved Picsum background for "${category}" (seed ${seed})`);
     return true;
   } catch (err) {
     console.warn("[generate-background] Failed:", err);
