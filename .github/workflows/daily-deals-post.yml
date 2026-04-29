@@ -27,6 +27,7 @@ jobs:
         run: npx puppeteer browsers install chrome
       - name: Generate deal images and captions
         env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
           MAX_DEALS: ${{ github.event.inputs.max_deals || '5' }}
           OUTPUT_DIR: ./output
