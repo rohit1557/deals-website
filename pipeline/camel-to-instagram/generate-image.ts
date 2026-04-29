@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer";
 import path from "path";
-import { readFileSync } from "fs";
+import fs from "fs";
+import { generateBackground } from "./generate-background";
 import type { ScoredDeal } from "./filter-deals";
 
 const TEMPLATE_PATH = path.resolve(__dirname, "templates/post-template.html");
@@ -21,12 +22,26 @@ function rankLabel(rank: number): string {
   return `Deal #${rank}`;
 }
 
+function cleanTitle(title: string): string {
+  return title
+    .replace(/\s*-?\s*down\s+[\d.]+%/gi, "")  // remove "down X%"
+    .replace(/\s*\([\d.]+%\s+off\)/gi, "")     // remove "(X% off)"
+    .replace(/\.\.\.$/, "")                     // remove trailing ellipsis
+    .trim();
+}
+
 export async function generateImage(
   deal: ScoredDeal,
   rank: number,
   outputPath: string,
 ): Promise<void> {
-  const templateHtml = readFileSync(TEMPLATE_PATH, "utf-8");
+  const outputDir = path.dirname(outputPath);
+  const bgPath = path.join(outputDir, `bg-${rank}.jpg`);
+
+  // Generate AI background — falls back to gradient if no API key or failure
+  const hasBg = await generateBackground(deal.category, bgPath);
+
+  const templateHtml = fs.readFileSync(TEMPLATE_PATH, "utf-8");
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -36,8 +51,21 @@ export async function generateImage(
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 2 });
-
     await page.setContent(templateHtml, { waitUntil: "networkidle0" });
+
+    // Inject background image if generated
+    if (hasBg && fs.existsSync(bgPath)) {
+      const bgBase64 = fs.readFileSync(bgPath).toString("base64");
+      await page.evaluate((b64: string) => {
+        const bg = document.getElementById("bg")!;
+        bg.style.backgroundImage = `url("data:image/jpeg;base64,${b64}")`;
+        bg.style.backgroundSize = "cover";
+        bg.style.backgroundPosition = "center";
+      }, bgBase64);
+    }
+
+    const title = cleanTitle(deal.title);
+    const shortTitle = title.length > 75 ? title.slice(0, 72) + "…" : title;
 
     await page.evaluate(
       ({ title, dealPrice, originalPrice, dropPct, rankLbl }) => {
@@ -58,7 +86,7 @@ export async function generateImage(
         }
       },
       {
-        title: deal.title.length > 80 ? deal.title.slice(0, 77) + "…" : deal.title,
+        title: shortTitle,
         dealPrice: deal.dealPrice != null ? formatAUD(deal.dealPrice) : "Great Price",
         originalPrice: deal.originalPrice != null ? formatAUD(deal.originalPrice) : null,
         dropPct: deal.dropPct,
@@ -68,6 +96,9 @@ export async function generateImage(
 
     await page.screenshot({ path: outputPath as `${string}.png`, type: "png" });
     console.log(`[generate-image] Saved ${outputPath}`);
+
+    // Clean up temp background file
+    if (hasBg && fs.existsSync(bgPath)) fs.unlinkSync(bgPath);
   } finally {
     await browser.close();
   }

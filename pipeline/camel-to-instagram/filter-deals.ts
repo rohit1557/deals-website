@@ -54,6 +54,9 @@ export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
   return deals
     .filter(d => {
       if (!d.dropPct || d.dropPct < MIN_DROP_PCT) return false;
+      if (d.dropPct > 80) return false; // likely fake RRP
+      // Suppress inflated RRP: original is 8x+ higher than deal price on cheap items
+      if (d.dealPrice && d.originalPrice && d.dealPrice < 30 && d.originalPrice / d.dealPrice >= 8) return false;
       const ageHours = (now - d.pubDate.getTime()) / 3_600_000;
       if (ageHours > MAX_AGE_HOURS) return false;
       return true;

@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -10,99 +9,120 @@
     width: 1080px;
     height: 1080px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
     color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background image layer */
+  #bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Dark overlay for readability */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.55) 0%,
+      rgba(0,0,0,0.7) 50%,
+      rgba(0,0,0,0.85) 100%
+    );
+  }
+
+  /* All content sits above overlay */
+  #frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 72px;
-    overflow: hidden;
+    padding: 52px 64px;
   }
 
   /* Brand bar */
   .brand {
-    position: absolute;
-    top: 44px;
-    left: 72px;
-    right: 72px;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
   .brand-name {
-    font-size: 28px;
-    font-weight: 800;
+    font-size: 30px;
+    font-weight: 900;
     letter-spacing: -0.5px;
-    background: linear-gradient(90deg, #6366f1, #a855f7);
+    background: linear-gradient(90deg, #818cf8, #c084fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
   .brand-site {
-    font-size: 18px;
-    color: rgba(255,255,255,0.4);
+    font-size: 17px;
+    color: rgba(255,255,255,0.5);
     font-weight: 500;
   }
 
   /* Main content */
   .content {
-    width: 100%;
-    text-align: center;
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 32px;
+    justify-content: center;
+    gap: 28px;
+    text-align: center;
   }
 
   .rank-badge {
     background: linear-gradient(90deg, #f59e0b, #ef4444);
     color: #fff;
-    font-size: 22px;
-    font-weight: 800;
+    font-size: 20px;
+    font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 10px 28px;
+    letter-spacing: 2.5px;
+    padding: 10px 30px;
     border-radius: 100px;
+    box-shadow: 0 4px 20px rgba(239,68,68,0.4);
   }
 
   .deal-title {
-    font-size: 46px;
+    font-size: 48px;
     font-weight: 800;
     line-height: 1.15;
-    text-align: center;
-    max-width: 900px;
-    /* Gradient text */
-    background: linear-gradient(90deg, #fff 0%, #e0e7ff 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    max-width: 880px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
   }
 
-  .price-block {
+  .price-row {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 28px;
-    margin-top: 8px;
+    gap: 24px;
+    flex-wrap: wrap;
   }
 
   .deal-price {
-    font-size: 88px;
+    font-size: 96px;
     font-weight: 900;
-    letter-spacing: -3px;
+    letter-spacing: -4px;
     color: #4ade80;
+    text-shadow: 0 0 40px rgba(74,222,128,0.3);
     line-height: 1;
   }
 
-  .price-detail {
+  .price-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 10px;
   }
 
   .was-price {
-    font-size: 28px;
-    color: rgba(255,255,255,0.45);
+    font-size: 26px;
+    color: rgba(255,255,255,0.4);
     text-decoration: line-through;
     font-weight: 600;
   }
@@ -110,11 +130,11 @@
   .drop-badge {
     background: #ef4444;
     color: #fff;
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 900;
-    padding: 6px 18px;
-    border-radius: 10px;
-    letter-spacing: 0.5px;
+    padding: 6px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(239,68,68,0.4);
   }
 
   .cta {
@@ -122,67 +142,53 @@
     color: #fff;
     font-size: 26px;
     font-weight: 700;
-    padding: 18px 56px;
-    border-radius: 16px;
+    padding: 18px 60px;
+    border-radius: 18px;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.5);
     letter-spacing: 0.3px;
-    box-shadow: 0 8px 32px rgba(99,102,241,0.4);
   }
 
-  .source-tag {
-    position: absolute;
-    bottom: 44px;
-    left: 72px;
-    right: 72px;
+  /* Footer */
+  .footer {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    font-size: 16px;
+    font-size: 15px;
     color: rgba(255,255,255,0.3);
     font-weight: 500;
+    gap: 8px;
   }
-
-  /* Decorative blobs */
-  .blob {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.15;
-    pointer-events: none;
-  }
-  .blob-1 { width: 500px; height: 500px; background: #6366f1; top: -150px; right: -100px; }
-  .blob-2 { width: 400px; height: 400px; background: #a855f7; bottom: -100px; left: -80px; }
-  .blob-3 { width: 300px; height: 300px; background: #22d3ee; bottom: 100px; right: 50px; }
 </style>
 </head>
 <body>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
+  <div id="bg"></div>
+  <div id="overlay"></div>
 
-  <div class="brand">
-    <span class="brand-name">DealDrop</span>
-    <span class="brand-site">dealdrop.au</span>
-  </div>
-
-  <div class="content">
-    <div class="rank-badge" id="rank-badge">Deal of the Day</div>
-
-    <div class="deal-title" id="deal-title">Loading...</div>
-
-    <div class="price-block">
-      <div class="deal-price" id="deal-price">$0</div>
-      <div class="price-detail">
-        <div class="was-price" id="was-price" style="display:none">was $0</div>
-        <div class="drop-badge" id="drop-badge" style="display:none">-0% OFF</div>
-      </div>
+  <div id="frame">
+    <div class="brand">
+      <span class="brand-name">DealDrop</span>
+      <span class="brand-site">dealdrop.au</span>
     </div>
 
-    <div class="cta">Link in bio → dealdrop.au</div>
-  </div>
+    <div class="content">
+      <div class="rank-badge" id="rank-badge">Deal of the Day</div>
 
-  <div class="source-tag">
-    Price drop data by CamelCamelCamel &nbsp;•&nbsp; Amazon Australia
+      <div class="deal-title" id="deal-title">Loading...</div>
+
+      <div class="price-row">
+        <div class="deal-price" id="deal-price">$0</div>
+        <div class="price-meta">
+          <div class="was-price" id="was-price" style="display:none"></div>
+          <div class="drop-badge" id="drop-badge" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="cta">Link in bio → dealdrop.au</div>
+    </div>
+
+    <div class="footer">
+      Price drop data by CamelCamelCamel &nbsp;•&nbsp; Amazon Australia
+    </div>
   </div>
 </body>
 </html>
