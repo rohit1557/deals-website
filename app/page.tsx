@@ -6,7 +6,10 @@ import CategoryFilter from "@/components/CategoryFilter";
 import CountryFilter from "@/components/CountryFilter";
 import SortSelector from "@/components/SortSelector";
 import Pagination from "@/components/Pagination";
-import { ShieldCheck, Clock, Store, Star, Zap, TrendingUp } from "lucide-react";
+import { ShieldCheck, Clock, Store, Star, Zap, TrendingUp, Flame, Plane } from "lucide-react";
+import { TRAVEL_DEALS } from "@/lib/travel-deals";
+import CountdownTimer from "@/components/CountdownTimer";
+import NewsletterSection from "@/components/NewsletterSection";
 import type { Deal } from "@/lib/types";
 
 interface PageProps {
@@ -103,7 +106,43 @@ async function getTopDeals(country?: string): Promise<Deal[]> {
     );
   });
 
-  return genuine.slice(0, 3).map((d) => ({
+  return genuine.slice(0, 6).map((d) => ({
+    ...d,
+    originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
+    dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
+  })) as Deal[];
+}
+
+async function getEndingSoon(country?: string): Promise<Deal[]> {
+  const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000); // next 24h
+  const rows = await db.deal.findMany({
+    where: {
+      isActive: true,
+      expiresAt: { not: null, lte: cutoff, gte: new Date() },
+      ...(country ? { country } : {}),
+    },
+    orderBy: { expiresAt: "asc" },
+    take: 4,
+  });
+  return rows.map((d) => ({
+    ...d,
+    originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
+    dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
+  })) as Deal[];
+}
+
+async function getAllTimeLows(country?: string): Promise<Deal[]> {
+  const rows = await db.deal.findMany({
+    where: {
+      isActive: true,
+      source: "camelcamelcamel",
+      discountPct: { gte: 20 },
+      ...(country ? { country } : {}),
+    },
+    orderBy: { discountPct: "desc" },
+    take: 4,
+  });
+  return rows.map((d) => ({
     ...d,
     originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
     dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
@@ -117,10 +156,12 @@ export default async function HomePage({ searchParams }: PageProps) {
   const country = searchParams.country;
   const isFiltered = !!(searchParams.q || searchParams.category || country);
 
-  const [{ deals, total }, stats, topDeals] = await Promise.all([
+  const [{ deals, total }, stats, topDeals, endingSoon, allTimeLows] = await Promise.all([
     getDeals(searchParams.q, searchParams.category, sort, page, limit, country),
     getSiteStats(country),
     isFiltered ? Promise.resolve([]) : getTopDeals(country),
+    isFiltered ? Promise.resolve([]) : getEndingSoon(country),
+    isFiltered ? Promise.resolve([]) : getAllTimeLows(country),
   ]);
 
   return (
@@ -168,11 +209,89 @@ export default async function HomePage({ searchParams }: PageProps) {
             <h2 className="text-lg font-bold text-gray-900">Top Deals Today</h2>
             <span className="text-xs text-gray-400">Highest discounts right now</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {topDeals.map((deal) => (
               <DealCard key={deal.id} deal={deal} />
             ))}
           </div>
+        </section>
+      )}
+
+      {/* ── All-Time Lows (CamelCamelCamel) ── */}
+      {!isFiltered && allTimeLows.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Flame className="h-5 w-5 text-red-500 fill-red-500" />
+            <h2 className="text-lg font-bold text-gray-900">All-Time Lows</h2>
+            <span className="text-xs text-gray-400">Verified price drops by CamelCamelCamel</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {allTimeLows.map((deal) => (
+              <DealCard key={deal.id} deal={deal} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Ending Soon ── */}
+      {!isFiltered && endingSoon.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-5 w-5 text-amber-500" />
+            <h2 className="text-lg font-bold text-gray-900">Ending Soon</h2>
+            <span className="text-xs text-gray-400">These deals expire in the next 24 hours</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {endingSoon.map((deal) => (
+              <div key={deal.id} className="relative">
+                <DealCard deal={deal} />
+                {deal.expiresAt && (
+                  <div className="absolute bottom-[68px] left-4 right-4 flex justify-center">
+                    <CountdownTimer expiresAt={deal.expiresAt} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Travel Picks ── */}
+      {!isFiltered && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Plane className="h-5 w-5 text-sky-500" />
+            <h2 className="text-lg font-bold text-gray-900">Travel Picks</h2>
+            <span className="text-xs text-gray-400">Handpicked hotel deals via Booking.com</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {TRAVEL_DEALS.map((t) => (
+              <a
+                key={t.id}
+                href={t.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl border border-gray-100 bg-white p-4 flex flex-col gap-2 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              >
+                <span className="text-4xl">{t.imageEmoji}</span>
+                <div>
+                  <p className="text-xs font-bold text-sky-600 uppercase tracking-wide">{t.destination}</p>
+                  <p className="text-sm font-semibold text-gray-800 leading-snug mt-0.5 group-hover:text-sky-700 transition-colors">
+                    {t.title}
+                  </p>
+                </div>
+                <span className="self-start text-[10px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-100">
+                  {t.tag}
+                </span>
+                <span className="mt-auto text-xs font-bold text-white bg-sky-500 group-hover:bg-sky-600 text-center py-1.5 rounded-xl transition-colors">
+                  View Deals →
+                </span>
+              </a>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2 text-right">
+            Affiliate link via Booking.com — <a href="/about#disclosure" className="underline">disclosure</a>
+          </p>
         </section>
       )}
 
@@ -251,34 +370,7 @@ export default async function HomePage({ searchParams }: PageProps) {
       )}
 
       {/* ── Email signup ── */}
-      {!isFiltered && (
-        <section className="rounded-2xl bg-gradient-to-r from-gray-900 to-slate-800 text-white p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="sm:max-w-sm">
-            <h2 className="text-xl font-bold mb-1">Get the best deals daily</h2>
-            <p className="text-gray-400 text-sm">No spam. Just the top deals of the day, straight to your inbox.</p>
-          </div>
-          <form
-            action="https://formspree.io/f/xvzdjlen"
-            method="POST"
-            className="flex gap-2 w-full sm:w-auto"
-          >
-            <input type="hidden" name="_subject" value="DealDrop Newsletter Signup" />
-            <input
-              type="email"
-              name="email"
-              placeholder="your@email.com"
-              required
-              className="flex-1 sm:w-60 rounded-xl px-4 py-2.5 bg-white/10 border border-white/20 text-sm text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-400 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors whitespace-nowrap"
-            >
-              Subscribe
-            </button>
-          </form>
-        </section>
-      )}
+      {!isFiltered && <NewsletterSection />}
 
       {/* ── About blurb ── */}
       {!isFiltered && (

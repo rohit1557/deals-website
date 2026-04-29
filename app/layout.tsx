@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import Link from "next/link";
+import EmailPopup from "@/components/EmailPopup";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -48,6 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
 
+        <EmailPopup />
+
         {/* ── Footer ── */}
         <footer className="border-t border-gray-200 bg-white mt-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
@@ -94,6 +98,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
         </footer>
       </body>
+      {process.env.NEXT_PUBLIC_GA_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+      )}
     </html>
   );
 }
