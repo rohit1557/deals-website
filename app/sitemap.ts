@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export const revalidate = 3600; // regenerate every hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://deals-website-peach.vercel.app";
+  const baseUrl = "https://dealdrop.au";
 
   // Static pages
   const static_pages: MetadataRoute.Sitemap = [

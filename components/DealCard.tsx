@@ -66,11 +66,12 @@ function getPromoType(title: string, description?: string | null, url?: string):
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  ozbargain:   "OzBargain",
-  slickdeals:  "SlickDeals",
-  dealnews:    "DealNews",
-  retailmenot: "r/AusDeals",
-  indiadeals:  "r/IndiaDeals",
+  ozbargain:        "OzBargain",
+  slickdeals:       "SlickDeals",
+  dealnews:         "DealNews",
+  retailmenot:      "r/AusDeals",
+  indiadeals:       "r/IndiaDeals",
+  camelcamelcamel:  "CamelCamelCamel",
 };
 
 // All current sources are community-posted (OzBargain, Reddit etc.) —
@@ -139,7 +140,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
   return (
     <a
-      href={expired ? undefined : affiliateUrl(deal.url)}
+      href={expired ? undefined : `/out?url=${encodeURIComponent(affiliateUrl(deal.url))}&id=${deal.id}`}
       target="_blank"
       rel="noopener noreferrer"
       aria-disabled={expired ? "true" : undefined}
@@ -250,8 +251,15 @@ export default function DealCard({ deal }: { deal: Deal }) {
             {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
 
+          {/* CCC verified badge — price drop confirmed by price-tracking data */}
+          {deal.source === "camelcamelcamel" && !expired && (
+            <p className="text-[10px] text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1 leading-snug">
+              ✓ Price drop verified by CamelCamelCamel
+            </p>
+          )}
+
           {/* Stale price warning — listing is > 12h old, price likely changed */}
-          {isStale && !expired && (
+          {isStale && deal.source !== "camelcamelcamel" && !expired && (
             <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
               Listed {ageLabel} — verify current price on retailer site.
             </p>
