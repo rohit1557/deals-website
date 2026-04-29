@@ -10,7 +10,7 @@ export interface TravelDeal {
 
 // Manually curated travel deals — update periodically with genuine offers.
 // Booking.com affiliate partner ID: used in URL construction.
-const BOOKING_AFF = "aid=2345678"; // replace with real affiliate ID from Booking.com
+const BOOKING_AFF = "aid=304142&label=2875265";
 
 export const TRAVEL_DEALS: TravelDeal[] = [
   {
