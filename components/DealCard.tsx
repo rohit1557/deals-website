@@ -105,15 +105,22 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const promoType = getPromoType(deal.title, deal.description, deal.url);
   const isPromo   = promoType !== null;
 
-  const discountPct = isPromo ? null
+  // Inflated RRP: OzBargain posts often invent a high "was" price for cheap items.
+  // If deal_price < $30 and "original" is 8x higher, suppress all discount display.
+  const hasInflatedRrp =
+    deal.originalPrice != null &&
+    deal.dealPrice != null &&
+    deal.dealPrice < 30 &&
+    deal.originalPrice / deal.dealPrice >= 8;
+
+  const discountPct = isPromo || hasInflatedRrp ? null
     : deal.discountPercentage != null ? deal.discountPercentage
     : deal.discountPct        != null ? deal.discountPct
     : deal.originalPrice && deal.dealPrice && deal.originalPrice > 0
       ? Math.round(((deal.originalPrice - deal.dealPrice) / deal.originalPrice) * 100)
       : null;
 
-  // Suppress save amount for promo deals — the "original price" is usually fake RRP
-  const saveAmount = isPromo ? null
+  const saveAmount = isPromo || hasInflatedRrp ? null
     : deal.originalPrice && deal.dealPrice && deal.originalPrice > deal.dealPrice
       ? deal.originalPrice - deal.dealPrice
       : null;
@@ -210,7 +217,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
               {formatPrice(deal.dealPrice, deal.currency, deal.country)}
             </span>
           )}
-          {!isPromo && deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
+          {!isPromo && !hasInflatedRrp && deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
             <span className="text-sm text-gray-400 line-through">
               {formatPrice(deal.originalPrice, deal.currency, deal.country)}
             </span>

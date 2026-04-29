@@ -82,7 +82,7 @@ const PROMO_TERMS = [
 async function getTopDeals(country?: string): Promise<Deal[]> {
   const where = {
     isActive: true,
-    discountPct: { gte: 40, lte: 90 }, // cap at 90% — suspiciously high = likely fake RRP
+    discountPct: { gte: 40, lte: 75 }, // cap at 75% — above that is almost always fake RRP
     ...(country ? { country } : {}),
   };
   // Fetch extra so we have headroom after filtering promo deals
