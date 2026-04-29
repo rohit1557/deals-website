@@ -1,6 +1,6 @@
 "use client";
 import type { MouseEvent } from "react";
-import { Clock, Flame, Sparkles, Timer, Zap, Tag, CheckCircle } from "lucide-react";
+import { Clock, Flame, Sparkles, Timer, Zap, Tag } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
 const AMAZON_TAGS: Record<string, string> = {
@@ -68,30 +68,16 @@ const SOURCE_LABELS: Record<string, string> = {
   indiadeals:  "r/IndiaDeals",
 };
 
-const COMMUNITY_SOURCES = new Set(["ozbargain", "slickdeals", "dealnews", "retailmenot", "indiadeals"]);
-
-function getSourceBadge(deal: Deal): { text: string; className: string } {
-  const hoursAgo = (Date.now() - new Date(deal.updatedAt).getTime()) / 3_600_000;
-
-  // Stale data — price likely differs from what we scraped
-  if (hoursAgo > 6) {
-    return { text: "Verify price", className: "text-amber-500" };
-  }
-  if (deal.dealPrice != null && deal.originalPrice != null && deal.originalPrice > deal.dealPrice) {
-    return { text: "Price checked", className: "text-emerald-600" };
-  }
-  if (COMMUNITY_SOURCES.has(deal.source?.toLowerCase() ?? "")) {
-    return { text: "Verified", className: "text-blue-500" };
-  }
-  return { text: "Verified", className: "text-blue-500" };
-}
-
-function priceAge(updatedAt: Date): string {
-  const mins = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 60_000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+// All current sources are community-posted (OzBargain, Reddit etc.) —
+// prices are user-reported and never verified directly against the retailer.
+// Use createdAt (set once on first scrape) as the age signal; updatedAt
+// is reset by Scout on every hourly re-scrape and is not a reliable price-age proxy.
+function listingAge(createdAt: Date): { hoursAgo: number; label: string } {
+  const hoursAgo = (Date.now() - new Date(createdAt).getTime()) / 3_600_000;
+  const mins = Math.floor(hoursAgo * 60);
+  if (mins < 60) return { hoursAgo, label: `${mins}m ago` };
+  if (hoursAgo < 24) return { hoursAgo, label: `${Math.floor(hoursAgo)}h ago` };
+  return { hoursAgo, label: `${Math.floor(hoursAgo / 24)}d ago` };
 }
 
 const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string }> = {
@@ -131,10 +117,9 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const isEnding = !!deal.expiresAt &&
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
 
-  const sourceLabel  = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
-  const sourceBadge  = getSourceBadge(deal);
-  const ageLabel     = priceAge(deal.updatedAt);
-  const isStale      = (Date.now() - new Date(deal.updatedAt).getTime()) / 3_600_000 > 6;
+  const sourceLabel            = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
+  const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
+  const isStale                = hoursAgo > 12;
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     if (expired) e.preventDefault();
@@ -242,10 +227,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm">{deal.country === "IN" ? "🇮🇳" : "🇦🇺"}</span>
               <span className="text-xs font-semibold text-gray-700 truncate">{sourceLabel}</span>
-              <span className={`flex items-center gap-0.5 text-[10px] font-medium ${sourceBadge.className} shrink-0`}>
-                <CheckCircle className="h-2.5 w-2.5" />
-                {sourceBadge.text}
-              </span>
+              <span className="text-[10px] text-gray-400 shrink-0">{ageLabel}</span>
             </div>
             {expiry && expiry !== "Expired" && (
               <span className="flex items-center gap-1 text-[11px] text-amber-500 font-medium shrink-0">
@@ -256,10 +238,10 @@ export default function DealCard({ deal }: { deal: Deal }) {
             {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
 
-          {/* Stale price warning */}
+          {/* Stale price warning — listing is > 12h old, price likely changed */}
           {isStale && !expired && (
-            <p className="text-[10px] text-amber-600 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
-              Price last checked {ageLabel} — verify on retailer site before buying.
+            <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
+              Listed {ageLabel} — verify current price on retailer site.
             </p>
           )}
 
