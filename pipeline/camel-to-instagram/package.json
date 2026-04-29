@@ -8,6 +8,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "pg": "^8.12.0",
     "puppeteer": "^22.0.0"
   },
