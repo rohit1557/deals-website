@@ -69,18 +69,35 @@ async function getSiteStats(country?: string) {
   return { active, sources, fresh };
 }
 
+// Keywords that flag referral/cashback/promo deals with fake RRP savings
+const PROMO_TERMS = [
+  "referral", "refer a friend", "refer and earn",
+  "cashback", "cash back",
+  "freebie", "free gift", "free sample",
+  "voucher", "promo code", "coupon code",
+  "gift card",
+  "signup bonus", "sign-up bonus", "sign up bonus", "welcome bonus", "new customer offer",
+];
+
 async function getTopDeals(country?: string): Promise<Deal[]> {
   const where = {
     isActive: true,
-    discountPct: { gte: 40 },
+    discountPct: { gte: 40, lte: 90 }, // cap at 90% — suspiciously high = likely fake RRP
     ...(country ? { country } : {}),
   };
+  // Fetch extra so we have headroom after filtering promo deals
   const rows = await db.deal.findMany({
     where,
     orderBy: [{ discountPct: "desc" }, { createdAt: "desc" }],
-    take: 3,
+    take: 15,
   });
-  return rows.map((d) => ({
+
+  const genuine = rows.filter((d) => {
+    const text = d.title.toLowerCase();
+    return !PROMO_TERMS.some((t) => text.includes(t));
+  });
+
+  return genuine.slice(0, 3).map((d) => ({
     ...d,
     originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
     dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
