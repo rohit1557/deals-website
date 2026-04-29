@@ -24,9 +24,12 @@ function rankLabel(rank: number): string {
 
 function cleanTitle(title: string): string {
   return title
-    .replace(/\s*-?\s*down\s+[\d.]+%/gi, "")  // remove "down X%"
-    .replace(/\s*\([\d.]+%\s+off\)/gi, "")     // remove "(X% off)"
-    .replace(/\.\.\.$/, "")                     // remove trailing ellipsis
+    .replace(/\s*-?\s*down\s+[\d.]+%/gi, "")       // remove "down X%"
+    .replace(/\s*\([\d.]+%\s+off\)/gi, "")          // remove "(X% off)"
+    .replace(/\s*\(\$[\d,]+\.?\d*[^)]*\)/g, "")     // remove "($448.00...)"
+    .replace(/\s*\[[^\]]{0,30}\]/g, "")              // remove short [...] metadata
+    .replace(/\s*\.{2,}$/, "")                       // remove trailing ...
+    .replace(/\s+/g, " ")
     .trim();
 }
 
