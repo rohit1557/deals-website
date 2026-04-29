@@ -1,6 +1,6 @@
 "use client";
 import type { MouseEvent } from "react";
-import { Clock, Flame, Sparkles, Timer, Zap } from "lucide-react";
+import { Clock, Flame, Sparkles, Timer, Zap, Tag, CheckCircle } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
 const AMAZON_TAGS: Record<string, string> = {
@@ -23,11 +23,13 @@ function affiliateUrl(url: string): string {
   return url;
 }
 
-function formatPrice(price: number | null, currency?: string | null): string | null {
+function formatPrice(price: number | null, currency?: string | null, country?: string | null): string | null {
   if (price == null) return null;
-  return new Intl.NumberFormat("en-AU", {
+  const curr = currency?.trim() || (country === "IN" ? "INR" : "AUD");
+  const locale = curr === "INR" ? "en-IN" : "en-AU";
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: currency?.trim() || "AUD",
+    currency: curr,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(price);
@@ -46,13 +48,40 @@ function isNew(createdAt: Date): boolean {
   return Date.now() - new Date(createdAt).getTime() < 6 * 60 * 60 * 1000;
 }
 
+// Detect cashback/referral/promo deals that have misleading RRP savings
+function getPromoType(title: string, description?: string | null): string | null {
+  const text = `${title} ${description ?? ""}`.toLowerCase();
+  if (/referral|refer[\s-]a[\s-]friend|refer[\s-]and[\s-]earn/.test(text)) return "Referral Bonus";
+  if (/cashback|cash[\s-]back/.test(text)) return "Cashback";
+  if (/\bfreebie\b|\bfree\s+(gift|sample|item)\b/.test(text)) return "Freebie";
+  if (/\bvoucher\b|\bpromo\s*code\b|\bcoupon\s*code\b/.test(text)) return "Voucher";
+  if (/\bgift\s*card\b/.test(text)) return "Gift Card";
+  if (/sign[\s-]?up\s+bonus|welcome\s+bonus|new\s+customer\s+offer|bonus\s+credit/.test(text)) return "Sign-up Bonus";
+  return null;
+}
+
 const SOURCE_LABELS: Record<string, string> = {
   ozbargain:   "OzBargain",
-  slickdeals:  "OzBargain",
-  dealnews:    "OzBargain",
+  slickdeals:  "SlickDeals",
+  dealnews:    "DealNews",
   retailmenot: "r/AusDeals",
   indiadeals:  "r/IndiaDeals",
 };
+
+// Community-sourced = user-submitted deals that have been upvoted/visible
+const COMMUNITY_SOURCES = new Set(["ozbargain", "slickdeals", "dealnews", "retailmenot", "indiadeals"]);
+
+function getSourceBadge(deal: Deal): { text: string; className: string } | null {
+  const src = deal.source?.toLowerCase() ?? "";
+  // Price checked: we have both a deal price and original price from the retailer
+  if (deal.dealPrice != null && deal.originalPrice != null && deal.originalPrice > deal.dealPrice) {
+    return { text: "Price checked", className: "text-emerald-600" };
+  }
+  if (COMMUNITY_SOURCES.has(src)) {
+    return { text: "Verified", className: "text-blue-500" };
+  }
+  return null;
+}
 
 const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string }> = {
   Tech:    { bg: "from-blue-50 to-indigo-100",   emoji: "💻", badge: "bg-blue-100 text-blue-700" },
@@ -66,29 +95,33 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
 };
 
 export default function DealCard({ deal }: { deal: Deal }) {
-  const expiry   = timeUntilExpiry(deal.expiresAt);
-  const expired  = expiry === "Expired";
-  const fresh    = isNew(deal.createdAt);
-  const cat      = deal.category ?? "Other";
-  const style    = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE["Other"];
+  const expiry    = timeUntilExpiry(deal.expiresAt);
+  const expired   = expiry === "Expired";
+  const fresh     = isNew(deal.createdAt);
+  const cat       = deal.category ?? "Other";
+  const style     = CATEGORY_STYLE[cat] ?? CATEGORY_STYLE["Other"];
+  const promoType = getPromoType(deal.title, deal.description);
+  const isPromo   = promoType !== null;
 
-  const discountPct =
-    deal.discountPercentage != null ? deal.discountPercentage
-    : deal.discountPct != null      ? deal.discountPct
+  const discountPct = isPromo ? null
+    : deal.discountPercentage != null ? deal.discountPercentage
+    : deal.discountPct        != null ? deal.discountPct
     : deal.originalPrice && deal.dealPrice && deal.originalPrice > 0
       ? Math.round(((deal.originalPrice - deal.dealPrice) / deal.originalPrice) * 100)
       : null;
 
-  const saveAmount =
-    deal.originalPrice && deal.dealPrice && deal.originalPrice > deal.dealPrice
+  // Suppress save amount for promo deals — the "original price" is usually fake RRP
+  const saveAmount = isPromo ? null
+    : deal.originalPrice && deal.dealPrice && deal.originalPrice > deal.dealPrice
       ? deal.originalPrice - deal.dealPrice
       : null;
 
-  const isHot    = discountPct != null && discountPct >= 50;
+  const isHot    = !isPromo && discountPct != null && discountPct >= 50;
   const isEnding = !!deal.expiresAt &&
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
 
-  const sourceLabel = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
+  const sourceLabel  = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
+  const sourceBadge  = getSourceBadge(deal);
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     if (expired) e.preventDefault();
@@ -108,7 +141,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
       }`}
     >
       {/* Image / placeholder */}
-      <div className={`relative h-44 bg-gradient-to-br ${style.bg} flex items-center justify-center overflow-hidden`}>
+      <div className={`relative h-36 sm:h-44 bg-gradient-to-br ${style.bg} flex items-center justify-center overflow-hidden`}>
         {deal.imageUrl ? (
           <img
             src={deal.imageUrl}
@@ -121,11 +154,19 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </span>
         )}
 
-        {/* Discount badge */}
-        {discountPct != null && discountPct > 0 && (
+        {/* Discount badge — suppressed for promo deals */}
+        {!isPromo && discountPct != null && discountPct > 0 && (
           <div className="absolute top-3 right-3 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-red-500 shadow-lg shadow-red-500/30 text-white">
             <span className="text-xs font-bold leading-none">-{discountPct}%</span>
             <span className="text-[9px] leading-none opacity-80">OFF</span>
+          </div>
+        )}
+
+        {/* Promo type badge — replaces discount % for referral/cashback/etc. */}
+        {isPromo && (
+          <div className="absolute top-3 right-3 flex items-center gap-1 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-md max-w-[80px] text-center leading-tight">
+            <Tag className="h-2.5 w-2.5 shrink-0" />
+            <span className="truncate">{promoType}</span>
           </div>
         )}
 
@@ -149,7 +190,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
       </div>
 
       {/* Body */}
-      <div className="flex flex-col gap-2 p-4 flex-1">
+      <div className="flex flex-col gap-2 p-3 sm:p-4 flex-1">
         {/* Category pill */}
         <span className={`self-start text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${style.badge}`}>
           {style.emoji} {cat}
@@ -163,44 +204,50 @@ export default function DealCard({ deal }: { deal: Deal }) {
         <div className="flex items-baseline gap-2 mt-auto pt-1 flex-wrap">
           {deal.dealPrice != null && (
             <span className="text-xl font-extrabold text-indigo-600">
-              {formatPrice(deal.dealPrice, deal.currency)}
+              {formatPrice(deal.dealPrice, deal.currency, deal.country)}
             </span>
           )}
-          {deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
+          {!isPromo && deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
             <span className="text-sm text-gray-400 line-through">
-              {formatPrice(deal.originalPrice, deal.currency)}
+              {formatPrice(deal.originalPrice, deal.currency, deal.country)}
             </span>
           )}
         </div>
 
-        {/* Save $X */}
+        {/* Save $X — suppressed for promo deals */}
         {saveAmount != null && saveAmount > 1 && (
           <span className="self-start text-xs font-bold text-green-700 bg-green-50 border border-green-100 rounded-md px-2 py-0.5 flex items-center gap-1">
-            <Sparkles className="h-3 w-3" />
-            Save {formatPrice(saveAmount, deal.currency)}
+            <Sparkles className="h-3 w-3 shrink-0" />
+            Save {formatPrice(saveAmount, deal.currency, deal.country)}
           </span>
         )}
 
         {/* Footer */}
-        <div className="mt-2 pt-3 border-t border-gray-50 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-500">
-              {deal.country === "IN" ? "🇮🇳" : "🇦🇺"} {sourceLabel}
-            </span>
-            <div className="flex items-center gap-2 text-xs">
-              {expiry && expiry !== "Expired" && (
-                <span className="flex items-center gap-1 text-amber-500 font-medium">
-                  <Clock className="h-3 w-3" />
-                  {expiry}
+        <div className="mt-2 pt-2.5 border-t border-gray-50 space-y-2">
+          {/* Source — more prominent */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-sm">{deal.country === "IN" ? "🇮🇳" : "🇦🇺"}</span>
+              <span className="text-xs font-semibold text-gray-700 truncate">{sourceLabel}</span>
+              {sourceBadge && (
+                <span className={`flex items-center gap-0.5 text-[10px] font-medium ${sourceBadge.className} shrink-0`}>
+                  <CheckCircle className="h-2.5 w-2.5" />
+                  {sourceBadge.text}
                 </span>
               )}
-              {expired && <span className="text-red-400 font-medium">Expired</span>}
             </div>
+            {expiry && expiry !== "Expired" && (
+              <span className="flex items-center gap-1 text-[11px] text-amber-500 font-medium shrink-0">
+                <Clock className="h-3 w-3" />
+                {expiry}
+              </span>
+            )}
+            {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
 
           {/* CTA */}
           <div
-            className={`w-full text-center text-sm font-bold py-2.5 rounded-xl transition-colors ${
+            className={`w-full text-center text-sm font-bold py-2 rounded-xl transition-colors ${
               expired
                 ? "bg-gray-100 text-gray-400"
                 : "bg-blue-600 text-white group-hover:bg-blue-700"

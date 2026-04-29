@@ -194,12 +194,28 @@ export default async function HomePage({ searchParams }: PageProps) {
       {deals.length === 0 ? (
         <div className="text-center py-24 text-gray-400">
           <p className="text-5xl mb-4">🔍</p>
-          <p className="font-semibold text-gray-600 text-lg">No deals found</p>
-          <p className="text-sm mt-2">Try a different search or remove the filter</p>
-          <a href="/" className="mt-4 inline-block text-sm text-blue-600 hover:underline font-medium">View all deals</a>
+          <p className="font-semibold text-gray-600 text-lg">
+            {searchParams.q
+              ? `No deals found for "${searchParams.q}"`
+              : searchParams.category
+                ? `No ${searchParams.category} deals right now`
+                : "No deals found"}
+          </p>
+          <p className="text-sm mt-2 text-gray-400">
+            {searchParams.q
+              ? "Try a broader search term, or browse all deals below."
+              : "Check back soon — new deals are added every hour."}
+          </p>
+          <a href="/" className="mt-4 inline-block text-sm text-blue-600 hover:underline font-medium">Clear filters and view all deals</a>
         </div>
       ) : (
         <>
+          {/* Disclaimer */}
+          <p className="text-xs text-gray-400 text-center">
+            Prices and availability may change. Always check the retailer site before buying.{" "}
+            <a href="/about#disclosure" className="underline hover:text-gray-600">Affiliate disclosure</a>
+          </p>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {deals.map((deal) => (
               <DealCard key={deal.id} deal={deal} />

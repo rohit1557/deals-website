@@ -125,7 +125,7 @@ export default function AboutPage() {
       </section>
 
       {/* Affiliate disclosure */}
-      <section className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
+      <section id="disclosure" className="rounded-2xl border border-amber-200 bg-amber-50 p-6">
         <h2 className="font-bold text-amber-900 mb-2 text-sm uppercase tracking-widest">
           Affiliate Disclosure
         </h2>
