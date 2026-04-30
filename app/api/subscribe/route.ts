@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (!res.ok) {
+      // 409 = contact already exists in Loops — treat as success
+      if (res.status === 409) {
+        return Response.json({ ok: true });
+      }
       const body = await res.text();
       console.error("[subscribe] Loops error %d: %s", res.status, body);
       return Response.json({ error: "Subscription failed" }, { status: 502 });
