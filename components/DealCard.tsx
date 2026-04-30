@@ -1,6 +1,6 @@
 "use client";
 import type { MouseEvent } from "react";
-import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp } from "lucide-react";
+import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp, TrendingDown } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
 const AMAZON_TAGS: Record<string, string> = {
@@ -124,23 +124,45 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
   const promoType = getPromoType(deal.title, deal.description, deal.url);
   const isPromo   = promoType !== null;
 
-  const hasInflatedRrp =
+  // Recalculate from actual prices — always prefer this over whatever the DB stored
+  const calculatedDiscount =
     deal.originalPrice != null &&
     deal.dealPrice != null &&
-    deal.dealPrice < 30 &&
-    deal.originalPrice / deal.dealPrice >= 8;
-
-  const discountPct = isPromo || hasInflatedRrp ? null
-    : deal.discountPercentage != null ? deal.discountPercentage
-    : deal.discountPct        != null ? deal.discountPct
-    : deal.originalPrice && deal.dealPrice && deal.originalPrice > 0
+    deal.originalPrice > deal.dealPrice &&
+    deal.originalPrice > 0
       ? Math.round(((deal.originalPrice - deal.dealPrice) / deal.originalPrice) * 100)
       : null;
 
-  const saveAmount = isPromo || hasInflatedRrp ? null
-    : deal.originalPrice && deal.dealPrice && deal.originalPrice > deal.dealPrice
+  const calculatedSavings =
+    deal.originalPrice != null &&
+    deal.dealPrice != null &&
+    deal.originalPrice > deal.dealPrice
       ? deal.originalPrice - deal.dealPrice
       : null;
+
+  // Data is corrupt when the scraper stored the savings amount as dealPrice
+  // (savings >= current price is mathematically impossible)
+  const hasBadPriceData =
+    calculatedSavings != null &&
+    deal.dealPrice != null &&
+    calculatedSavings >= deal.dealPrice;
+
+  // Classic inflated RRP: cheap item with absurdly inflated "original" price
+  const hasInflatedRrp =
+    hasBadPriceData ||
+    (deal.originalPrice != null &&
+     deal.dealPrice != null &&
+     deal.dealPrice < 30 &&
+     deal.originalPrice / deal.dealPrice >= 8);
+
+  const discountPct = isPromo || hasInflatedRrp ? null
+    // When prices are present, always recalculate — never trust DB discountPct blindly
+    : calculatedDiscount != null ? calculatedDiscount
+    : deal.discountPercentage != null ? deal.discountPercentage
+    : deal.discountPct        != null ? deal.discountPct
+    : null;
+
+  const saveAmount = isPromo || hasInflatedRrp ? null : calculatedSavings;
 
   const isHot    = !isPromo && discountPct != null && discountPct >= 50;
   const isEnding = !!deal.expiresAt &&
@@ -203,7 +225,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           </div>
         )}
 
-        {/* Priority: Hot > Trending > New > Ending Soon */}
+        {/* Priority: Hot > Trending > All-Time Low > New > Ending Soon */}
         {isHot && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <Flame className="h-2.5 w-2.5" />
@@ -213,6 +235,11 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-violet-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <TrendingUp className="h-2.5 w-2.5" />
             TRENDING
+          </div>
+        ) : deal.source === "camelcamelcamel" && !expired ? (
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+            <TrendingDown className="h-2.5 w-2.5" />
+            ALL-TIME LOW
           </div>
         ) : fresh && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md shadow-orange-500/30">
