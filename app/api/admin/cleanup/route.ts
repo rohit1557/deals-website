@@ -23,12 +23,13 @@ export async function POST(req: NextRequest) {
   `;
   results.india_null_price_deactivated = nullPriceResult;
 
-  // 3. Deactivate Amazon browse/category URLs — /b/ or /s? paths with no /dp/ASIN (not product pages)
+  // 3. Deactivate Amazon browse/category/search URLs — no /dp/ASIN or /gp/product/ASIN = not a product page
   const amazonBrowseResult = await db.$executeRaw`
     UPDATE deals SET is_active = false
     WHERE is_active = true
       AND (url LIKE '%amazon.in%' OR url LIKE '%amazon.com.au%' OR url LIKE '%amazon.com%')
-      AND url NOT SIMILAR TO '%(amazon\.[a-z.]+/dp/[A-Z0-9]{10}|amazon\.[a-z.]+/gp/product/[A-Z0-9]{10})%'
+      AND url !~ '/dp/[A-Z0-9]{10}'
+      AND url !~ '/gp/product/[A-Z0-9]{10}'
   `;
   results.amazon_browse_urls_deactivated = amazonBrowseResult;
 
