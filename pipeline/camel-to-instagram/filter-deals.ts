@@ -54,23 +54,11 @@ export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
   return deals
     .filter(d => {
       const ageHours = (now - d.pubDate.getTime()) / 3_600_000;
-      if (!d.dropPct || d.dropPct < MIN_DROP_PCT) {
-        console.log(`[filter] SKIP "${d.title.slice(0, 50)}" — dropPct=${d.dropPct} < ${MIN_DROP_PCT}`);
-        return false;
-      }
-      if (d.dropPct > 80) {
-        console.log(`[filter] SKIP "${d.title.slice(0, 50)}" — dropPct=${d.dropPct} > 80 (fake RRP)`);
-        return false;
-      }
-      if (d.dealPrice && d.originalPrice && d.dealPrice < 30 && d.originalPrice / d.dealPrice >= 8) {
-        console.log(`[filter] SKIP "${d.title.slice(0, 50)}" — inflated RRP $${d.dealPrice} from $${d.originalPrice}`);
-        return false;
-      }
-      if (ageHours > MAX_AGE_HOURS) {
-        console.log(`[filter] SKIP "${d.title.slice(0, 50)}" — age=${ageHours.toFixed(1)}h > ${MAX_AGE_HOURS}h`);
-        return false;
-      }
-      console.log(`[filter] PASS "${d.title.slice(0, 50)}" — dropPct=${d.dropPct} age=${ageHours.toFixed(1)}h`);
+      if (!d.dropPct || d.dropPct < MIN_DROP_PCT) return false;
+      // CCC measures from all-time high — 90%+ drops are normal. Only block
+      // genuinely absurd cheap items with inflated RRP (e.g. $5 item "was $50")
+      if (d.dealPrice && d.originalPrice && d.dealPrice < 30 && d.originalPrice / d.dealPrice >= 8) return false;
+      if (ageHours > MAX_AGE_HOURS) return false;
       return true;
     })
     .map(d => ({ ...d, score: scoredeal(d), category: guessCategory(d.title) }))
