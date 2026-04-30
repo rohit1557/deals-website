@@ -69,6 +69,7 @@ const SOURCE_LABELS: Record<string, string> = {
   dealnews:        "DealNews",
   retailmenot:     "r/AusDeals",
   indiadeals:      "r/IndiaDeals",
+  desidime:        "DesiDime",
   camelcamelcamel: "CamelCamelCamel",
 };
 
