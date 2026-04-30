@@ -101,6 +101,9 @@
     font-size: 96px;
     letter-spacing: -4px;
   }
+  .content.no-product .cta {
+    max-width: 880px;
+  }
 
   /* Product image column */
   .product-col {
@@ -111,36 +114,58 @@
     justify-content: center;
   }
 
+  /* Spotlight glow behind product */
+  .product-col {
+    position: relative;
+  }
+  .product-col::before {
+    content: '';
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
   .product-frame {
     width: 400px;
     height: 400px;
     border-radius: 28px;
     overflow: hidden;
-    background: rgba(255,255,255,0.06);
+    /* White frame so mix-blend-mode:multiply on the img makes the product's
+       white background disappear and only the product itself is visible */
+    background: #fff;
     box-shadow:
-      0 30px 100px rgba(0,0,0,0.7),
-      0 0 0 1px rgba(255,255,255,0.12),
-      inset 0 1px 0 rgba(255,255,255,0.1);
+      0 30px 100px rgba(0,0,0,0.65),
+      0 0 0 1px rgba(255,255,255,0.08);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
   }
 
-  /* Subtle radial vignette on product image edges */
+  /* Radial vignette fades edges into the dark background */
   .product-frame::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.45) 100%);
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%);
     pointer-events: none;
+    border-radius: 28px;
   }
 
   #product-image {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 18px;
+    padding: 16px;
+    /* multiply makes white pixels transparent against the white frame,
+       so only the actual product renders visibly */
+    mix-blend-mode: multiply;
   }
 
   /* ── Text elements ── */
@@ -208,12 +233,14 @@
   .cta {
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     color: #fff;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
     padding: 14px 28px;
     border-radius: 14px;
     box-shadow: 0 8px 32px rgba(99,102,241,0.5);
-    word-break: break-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     max-width: 560px;
   }
 
