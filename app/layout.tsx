@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Link from "next/link";
+import { Suspense } from "react";
 import EmailPopup from "@/components/EmailPopup";
+import CountryToggle from "@/components/CountryToggle";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -36,7 +38,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link href="/contact" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</Link>
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <Suspense fallback={
+                <div className="flex items-center bg-gray-100 rounded-full p-0.5">
+                  <span className="px-2.5 py-1 text-xs font-bold text-gray-400">🇦🇺 <span className="hidden sm:inline">Australia</span><span className="sm:hidden">AU</span></span>
+                  <span className="px-2.5 py-1 text-xs font-bold text-gray-400">🇮🇳 <span className="hidden sm:inline">India</span><span className="sm:hidden">IN</span></span>
+                </div>
+              }>
+                <CountryToggle />
+              </Suspense>
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />

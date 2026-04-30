@@ -3,7 +3,6 @@ import { db } from "@/lib/db";
 import DealCard from "@/components/DealCard";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilter from "@/components/CategoryFilter";
-import CountryFilter from "@/components/CountryFilter";
 import SortSelector from "@/components/SortSelector";
 import Pagination from "@/components/Pagination";
 import { ShieldCheck, Clock, Store, Star, Zap, TrendingUp, Flame, Plane } from "lucide-react";
@@ -154,7 +153,8 @@ export default async function HomePage({ searchParams }: PageProps) {
   const limit   = Math.min(96, Math.max(12, parseInt(searchParams.limit ?? "24", 10)));
   const sort    = searchParams.sort    ?? "newest";
   const country = searchParams.country;
-  const isFiltered = !!(searchParams.q || searchParams.category || country);
+  // country is a display mode, not a search filter — sections stay visible when it's set
+  const isFiltered = !!(searchParams.q || searchParams.category);
 
   const [{ deals, total }, stats, topDeals, endingSoon, allTimeLows] = await Promise.all([
     getDeals(searchParams.q, searchParams.category, sort, page, limit, country),
@@ -174,7 +174,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-white/5 rounded-full pointer-events-none" />
 
           <div className="relative max-w-2xl">
-            <div className="flex items-center gap-2 mb-5">
+            <div className="flex items-center gap-2 mb-5 flex-wrap">
               <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -183,7 +183,7 @@ export default async function HomePage({ searchParams }: PageProps) {
                 {stats.active} live deals right now
               </span>
               <span className="bg-white/15 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full">
-                No fake coupons
+                {country === "IN" ? "🇮🇳 Showing India deals" : "🇦🇺 Showing Australia deals"}
               </span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-4">
@@ -191,9 +191,10 @@ export default async function HomePage({ searchParams }: PageProps) {
               <span className="text-blue-200">Only real deals make it here.</span>
             </h1>
             <p className="text-blue-100 text-base sm:text-lg mb-7 leading-relaxed max-w-xl">
-              DealDrop tracks Amazon AU, OzBargain, r/AusDeals and more — automatically
-              dropping expired prices, inflated RRPs, and dodgy voucher codes before
-              anything hits your screen.
+              {country === "IN"
+                ? "DealDrop tracks Amazon India, Flipkart, r/IndiaDeals and more — dropping expired prices, inflated MRPs, and fake coupons automatically."
+                : "DealDrop tracks Amazon AU, OzBargain, r/AusDeals and more — automatically dropping expired prices, inflated RRPs, and dodgy voucher codes before anything hits your screen."
+              }
             </p>
             <div className="flex flex-wrap gap-2.5 text-sm">
               {[
@@ -310,11 +311,6 @@ export default async function HomePage({ searchParams }: PageProps) {
           </div>
         </section>
       )}
-
-      {/* ── Country filter ── */}
-      <Suspense>
-        <CountryFilter />
-      </Suspense>
 
       {/* ── Search + Sort ── */}
       <div className="flex flex-col sm:flex-row gap-3">
