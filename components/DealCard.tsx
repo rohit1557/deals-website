@@ -274,10 +274,14 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
         )}
 
         <div className="flex items-baseline gap-2 mt-auto pt-1 flex-wrap">
-          {deal.dealPrice != null && (
+          {/* Hide dealPrice when it's actually the savings amount (scraper bug) */}
+          {deal.dealPrice != null && !hasBadPriceData && (
             <span className="text-xl font-extrabold text-indigo-600">
               {formatPrice(deal.dealPrice, deal.currency, deal.country)}
             </span>
+          )}
+          {hasBadPriceData && (
+            <span className="text-sm text-gray-400 italic">Check price on retailer site</span>
           )}
           {!isPromo && !hasInflatedRrp && deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
             <span className="text-sm text-gray-400 line-through">
