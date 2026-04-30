@@ -2,10 +2,12 @@ import type { RawDeal } from "./fetch-deals";
 
 const VISUAL_CATEGORIES = ["Tech", "Gaming", "Home", "Fashion", "Beauty"];
 
-// Only post deals with meaningful real discounts
-const MIN_DROP_PCT   = 10;   // minimum % off from recent high
-const MIN_SAVINGS    = 15;   // minimum dollar savings (AUD) — filters out tiny drops
-const MAX_AGE_HOURS  = 48;   // CCC top-drops are very fresh; reject anything older
+// Only post deals with meaningful real discounts.
+// OR logic: a big % drop on a cheap item OR a big saving on an expensive item both qualify.
+const MIN_DROP_PCT     = 8;    // minimum % off from recent high
+const MIN_SAVINGS_HIGH = 20;   // if savings >= $20, only needs 5%+ drop (any significant item)
+const MIN_SAVINGS_LOW  = 8;    // paired with MIN_DROP_PCT for cheaper products
+const MAX_AGE_HOURS    = 48;   // CCC top-drops are very fresh; reject anything older
 
 export interface ScoredDeal extends RawDeal {
   score: number;
@@ -53,11 +55,15 @@ export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
 
   return deals
     .filter(d => {
-      if (!d.dropPct || d.dropPct < MIN_DROP_PCT) return false;
-      if (!d.savingsAbs || d.savingsAbs < MIN_SAVINGS) return false;
+      if (!d.dropPct) return false;
+      const savings = d.savingsAbs ?? 0;
       const ageHours = (now - d.pubDate.getTime()) / 3_600_000;
       if (ageHours > MAX_AGE_HOURS) return false;
-      return true;
+      // Big % drop with at least minimal savings
+      if (d.dropPct >= MIN_DROP_PCT && savings >= MIN_SAVINGS_LOW) return true;
+      // Moderate % drop but large absolute savings (expensive product on sale)
+      if (d.dropPct >= 5 && savings >= MIN_SAVINGS_HIGH) return true;
+      return false;
     })
     .map(d => ({ ...d, score: scoreDeal(d), category: guessCategory(d.title) }))
     .sort((a, b) => b.score - a.score)
