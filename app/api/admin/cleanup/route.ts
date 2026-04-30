@@ -1,6 +1,21 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
+// Temporary: restore India deals incorrectly deactivated by over-broad null-price rule
+export async function GET(_req: NextRequest) {
+  const restored = await db.$executeRaw`
+    UPDATE deals SET is_active = true
+    WHERE is_active = false
+      AND country = 'IN'
+      AND lower(source) = 'indiadeals'
+      AND deal_price IS NULL
+      AND url NOT LIKE '%reddit.com%'
+      AND url NOT LIKE '%redd.it%'
+  `;
+  const remaining = await db.deal.count({ where: { isActive: true, country: "IN" } });
+  return Response.json({ restored, active_india_deals_remaining: remaining });
+}
+
 export async function POST(req: NextRequest) {
   const results: Record<string, number> = {};
 
@@ -12,12 +27,13 @@ export async function POST(req: NextRequest) {
   `;
   results.reddit_urls_deactivated = redditResult;
 
-  // 2. Deactivate IndiaDeals source deals with null deal_price (discussion posts / broken links)
+  // 2. Deactivate IndiaDeals deals with null price AND a Reddit URL (these are broken links, not real deals)
   const nullPriceResult = await db.$executeRaw`
     UPDATE deals SET is_active = false
     WHERE is_active = true
       AND lower(source) = 'indiadeals'
       AND deal_price IS NULL
+      AND (url LIKE '%reddit.com%' OR url LIKE '%redd.it%')
   `;
   results.india_null_price_deactivated = nullPriceResult;
 
