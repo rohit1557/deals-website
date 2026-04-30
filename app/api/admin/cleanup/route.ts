@@ -3,6 +3,16 @@ import { db } from "@/lib/db";
 
 
 
+export async function GET(_req: NextRequest) {
+  const rows = await db.$queryRaw<{id: string, url: string, title: string, is_active: boolean}[]>`
+    SELECT id, url, title, is_active FROM deals
+    WHERE url LIKE '%amazon.in%'
+    ORDER BY is_active DESC, created_at DESC
+    LIMIT 30
+  `;
+  return Response.json(rows);
+}
+
 export async function POST(req: NextRequest) {
   const results: Record<string, number> = {};
 
