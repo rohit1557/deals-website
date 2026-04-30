@@ -82,9 +82,12 @@ const PROMO_TERMS = [
 ];
 
 async function getTopDeals(country?: string): Promise<Deal[]> {
+  const isIndia = country === "IN";
   const where = {
     isActive: true,
-    discountPct: { gte: 40, lte: 75 }, // cap at 75% — above that is almost always fake RRP
+    // India: lower minimum (15%) — fewer extreme discounts; higher cap (90%) — fashion/electronics
+    // AU: strict 40–75% range to weed out fake RRP
+    discountPct: { gte: isIndia ? 15 : 40, lte: isIndia ? 90 : 75 },
     ...(country ? { country } : {}),
   };
   // Fetch extra so we have headroom after filtering promo deals
@@ -131,13 +134,15 @@ async function getEndingSoon(country?: string): Promise<Deal[]> {
 }
 
 async function getAllTimeLows(country?: string): Promise<Deal[]> {
+  const isIndia = country === "IN";
+  const where = isIndia
+    // India: best available deals from any source with verified discount
+    ? { isActive: true, discountPct: { gte: 20 }, country: "IN" }
+    // AU: CamelCamelCamel verified price drops only
+    : { isActive: true, source: "camelcamelcamel", discountPct: { gte: 20 } };
+
   const rows = await db.deal.findMany({
-    where: {
-      isActive: true,
-      source: "camelcamelcamel",
-      discountPct: { gte: 20 },
-      ...(country ? { country } : {}),
-    },
+    where,
     orderBy: { discountPct: "desc" },
     take: 4,
   });
@@ -228,8 +233,8 @@ export default async function HomePage({ searchParams }: PageProps) {
         </section>
       )}
 
-      {/* ── Travel Picks ── */}
-      {!isFiltered && (
+      {/* ── Travel Picks — AU only (prices in AUD, AU destinations) ── */}
+      {!isFiltered && country !== "IN" && (
         <section className="rounded-3xl bg-gradient-to-br from-sky-500 via-cyan-500 to-blue-600 p-6 sm:p-8 overflow-hidden relative">
           <div className="absolute -top-10 -right-10 w-56 h-56 bg-white/5 rounded-full pointer-events-none" />
           <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
@@ -279,7 +284,9 @@ export default async function HomePage({ searchParams }: PageProps) {
           <div className="flex items-center gap-2 mb-4">
             <Flame className="h-5 w-5 text-red-500 fill-red-500" />
             <h2 className="text-lg font-bold text-gray-900">All-Time Lows</h2>
-            <span className="text-xs text-gray-400">Verified price drops by CamelCamelCamel</span>
+            <span className="text-xs text-gray-400">
+              {country === "IN" ? "Best discounts right now" : "Verified price drops by CamelCamelCamel"}
+            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {allTimeLows.map((deal) => (

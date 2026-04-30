@@ -174,7 +174,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
 
   const insight     = dealInsight(deal, discountPct, saveAmount, isPromo);
-  const sourceLabel = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
+  const sourceLabel = SOURCE_LABELS[(deal.source ?? "").toLowerCase()] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
   const isStale = hoursAgo > 12;
 
