@@ -32,7 +32,17 @@ export async function POST(req: NextRequest) {
   `;
   results.amazon_browse_urls_deactivated = amazonBrowseResult;
 
-  // 4. Deactivate duplicate India deals — same title+country, keep only the newest updated_at
+  // 4. Deactivate deals whose URLs are non-deal software/SaaS/blog domains
+  const nonDealDomainResult = await db.$executeRaw`
+    UPDATE deals SET is_active = false
+    WHERE is_active = true
+      AND (
+        url LIKE '%edusys.co%'
+      )
+  `;
+  results.non_deal_domains_deactivated = nonDealDomainResult;
+
+  // 5. Deactivate duplicate India deals — same title+country, keep only the newest updated_at
   const dupResult = await db.$executeRaw`
     UPDATE deals d SET is_active = false
     WHERE d.is_active = true
@@ -48,7 +58,7 @@ export async function POST(req: NextRequest) {
   `;
   results.duplicates_deactivated = dupResult;
 
-  // 5. Summary of remaining India deals
+  // 6. Summary of remaining India deals
   const remaining = await db.deal.count({
     where: { isActive: true, country: "IN" },
   });
