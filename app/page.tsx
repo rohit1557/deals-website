@@ -106,7 +106,7 @@ async function getTopDeals(country?: string): Promise<Deal[]> {
     );
   });
 
-  return genuine.slice(0, 6).map((d) => ({
+  return genuine.slice(0, 9).map((d) => ({
     ...d,
     originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
     dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
@@ -174,16 +174,26 @@ export default async function HomePage({ searchParams }: PageProps) {
           <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-white/5 rounded-full pointer-events-none" />
 
           <div className="relative max-w-2xl">
-            <span className="inline-block bg-white/20 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full mb-5">
-              🔥 {stats.active} live deals right now
-            </span>
+            <div className="flex items-center gap-2 mb-5">
+              <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400" />
+                </span>
+                {stats.active} live deals right now
+              </span>
+              <span className="bg-white/15 text-white/80 text-xs font-semibold px-3 py-1.5 rounded-full">
+                No fake coupons
+              </span>
+            </div>
             <h1 className="text-3xl sm:text-4xl font-black leading-tight mb-4">
-              Real deals. Verified prices.<br />
-              <span className="text-blue-200">Updated every hour.</span>
+              We filter out the junk.<br />
+              <span className="text-blue-200">Only real deals make it here.</span>
             </h1>
             <p className="text-blue-100 text-base sm:text-lg mb-7 leading-relaxed max-w-xl">
-              We track deals from Amazon, OzBargain, Flipkart and more — filtering
-              out bad links, expired prices, and suspicious discounts automatically.
+              DealDrop tracks Amazon AU, OzBargain, r/AusDeals and more — automatically
+              dropping expired prices, inflated RRPs, and dodgy voucher codes before
+              anything hits your screen.
             </p>
             <div className="flex flex-wrap gap-2.5 text-sm">
               {[
@@ -207,12 +217,57 @@ export default async function HomePage({ searchParams }: PageProps) {
           <div className="flex items-center gap-2 mb-4">
             <Zap className="h-5 w-5 text-amber-500 fill-amber-500" />
             <h2 className="text-lg font-bold text-gray-900">Top Deals Today</h2>
-            <span className="text-xs text-gray-400">Highest discounts right now</span>
+            <span className="text-xs text-gray-400">Highest verified discounts right now</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {topDeals.map((deal) => (
-              <DealCard key={deal.id} deal={deal} />
+            {topDeals.map((deal, i) => (
+              <DealCard key={deal.id} deal={deal} trending={i < 3} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── Travel Picks ── */}
+      {!isFiltered && (
+        <section className="rounded-3xl bg-gradient-to-br from-sky-500 via-cyan-500 to-blue-600 p-6 sm:p-8 overflow-hidden relative">
+          <div className="absolute -top-10 -right-10 w-56 h-56 bg-white/5 rounded-full pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Plane className="h-5 w-5 text-white" />
+                <h2 className="text-lg font-bold text-white">Travel Picks</h2>
+                <span className="text-xs text-white/70 bg-white/15 px-2 py-0.5 rounded-full">Handpicked</span>
+              </div>
+              <p className="text-[10px] text-white/50">
+                Via Booking.com · <a href="/about#disclosure" className="underline">disclosure</a>
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {TRAVEL_DEALS.map((t) => (
+                <a
+                  key={t.id}
+                  href={t.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-2xl bg-white/15 backdrop-blur border border-white/20 p-4 flex flex-col gap-2 hover:bg-white/25 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+                >
+                  <span className="text-4xl">{t.imageEmoji}</span>
+                  <div>
+                    <p className="text-xs font-bold text-white/70 uppercase tracking-wide">{t.destination}</p>
+                    <p className="text-sm font-semibold text-white leading-snug mt-0.5">
+                      {t.title}
+                    </p>
+                  </div>
+                  <span className="self-start text-[10px] bg-white/20 text-white font-bold px-2 py-0.5 rounded-full">
+                    {t.tag}
+                  </span>
+                  <span className="mt-auto text-xs font-bold text-sky-700 bg-white group-hover:bg-white/90 text-center py-1.5 rounded-xl transition-colors">
+                    View Deals →
+                  </span>
+                </a>
+              ))}
+            </div>
           </div>
         </section>
       )}
@@ -253,45 +308,6 @@ export default async function HomePage({ searchParams }: PageProps) {
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* ── Travel Picks ── */}
-      {!isFiltered && (
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Plane className="h-5 w-5 text-sky-500" />
-            <h2 className="text-lg font-bold text-gray-900">Travel Picks</h2>
-            <span className="text-xs text-gray-400">Handpicked hotel deals via Booking.com</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            {TRAVEL_DEALS.map((t) => (
-              <a
-                key={t.id}
-                href={t.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group rounded-2xl border border-gray-100 bg-white p-4 flex flex-col gap-2 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-              >
-                <span className="text-4xl">{t.imageEmoji}</span>
-                <div>
-                  <p className="text-xs font-bold text-sky-600 uppercase tracking-wide">{t.destination}</p>
-                  <p className="text-sm font-semibold text-gray-800 leading-snug mt-0.5 group-hover:text-sky-700 transition-colors">
-                    {t.title}
-                  </p>
-                </div>
-                <span className="self-start text-[10px] bg-sky-50 text-sky-700 font-bold px-2 py-0.5 rounded-full border border-sky-100">
-                  {t.tag}
-                </span>
-                <span className="mt-auto text-xs font-bold text-white bg-sky-500 group-hover:bg-sky-600 text-center py-1.5 rounded-xl transition-colors">
-                  View Deals →
-                </span>
-              </a>
-            ))}
-          </div>
-          <p className="text-[10px] text-gray-400 mt-2 text-right">
-            Affiliate link via Booking.com — <a href="/about#disclosure" className="underline">disclosure</a>
-          </p>
         </section>
       )}
 

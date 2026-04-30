@@ -1,6 +1,6 @@
 "use client";
 import type { MouseEvent } from "react";
-import { Clock, Flame, Sparkles, Timer, Zap, Tag } from "lucide-react";
+import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
 const AMAZON_TAGS: Record<string, string> = {
@@ -48,9 +48,7 @@ function isNew(createdAt: Date): boolean {
   return Date.now() - new Date(createdAt).getTime() < 6 * 60 * 60 * 1000;
 }
 
-// Detect cashback/referral/promo deals that have misleading RRP savings
 function getPromoType(title: string, description?: string | null, url?: string): string | null {
-  // URL-based detection is most reliable — /join/, /refer/, ?ref= etc.
   if (url) {
     const u = url.toLowerCase();
     if (/\/(join|refer|referral|invite|enroll)\//.test(u)) return "Referral Bonus";
@@ -66,24 +64,44 @@ function getPromoType(title: string, description?: string | null, url?: string):
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  ozbargain:        "OzBargain",
-  slickdeals:       "SlickDeals",
-  dealnews:         "DealNews",
-  retailmenot:      "r/AusDeals",
-  indiadeals:       "r/IndiaDeals",
-  camelcamelcamel:  "CamelCamelCamel",
+  ozbargain:       "OzBargain",
+  slickdeals:      "SlickDeals",
+  dealnews:        "DealNews",
+  retailmenot:     "r/AusDeals",
+  indiadeals:      "r/IndiaDeals",
+  camelcamelcamel: "CamelCamelCamel",
 };
 
-// All current sources are community-posted (OzBargain, Reddit etc.) —
-// prices are user-reported and never verified directly against the retailer.
-// Use createdAt (set once on first scrape) as the age signal; updatedAt
-// is reset by Scout on every hourly re-scrape and is not a reliable price-age proxy.
 function listingAge(createdAt: Date): { hoursAgo: number; label: string } {
   const hoursAgo = (Date.now() - new Date(createdAt).getTime()) / 3_600_000;
   const mins = Math.floor(hoursAgo * 60);
   if (mins < 60) return { hoursAgo, label: `${mins}m ago` };
   if (hoursAgo < 24) return { hoursAgo, label: `${Math.floor(hoursAgo)}h ago` };
   return { hoursAgo, label: `${Math.floor(hoursAgo / 24)}d ago` };
+}
+
+// Short human-like context line — avoids filler, gives a real reason to care
+function dealInsight(
+  deal: Deal,
+  discountPct: number | null,
+  saveAmount: number | null,
+  isPromo: boolean,
+): string | null {
+  if (isPromo) return null;
+  if (deal.source === "camelcamelcamel") return "Lowest price tracked in months";
+  if (discountPct && discountPct >= 60) return "Rarely drops this low — worth grabbing";
+  if (discountPct && discountPct >= 40) return "One of the better discounts we've seen";
+  if (saveAmount && saveAmount >= 150)  return "You're saving serious money here";
+  if (saveAmount && saveAmount >= 50)   return "Solid savings vs. regular price";
+  if (deal.expiresAt)                   return "Limited-time price — may go back up soon";
+  const catInsights: Record<string, string> = {
+    Tech:    "Good price point for this category",
+    Gaming:  "Worth it if you've been eyeing this",
+    Home:    "Popular pick for Aussie homes",
+    Fashion: "Quality brand at a reduced price",
+    Beauty:  "Top-rated — frequently sells out",
+  };
+  return catInsights[deal.category ?? ""] ?? null;
 }
 
 const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string }> = {
@@ -97,7 +115,7 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
   Other:   { bg: "from-gray-50 to-slate-100",     emoji: "🏷️", badge: "bg-gray-100 text-gray-600" },
 };
 
-export default function DealCard({ deal }: { deal: Deal }) {
+export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
   const expiry    = timeUntilExpiry(deal.expiresAt);
   const expired   = expiry === "Expired";
   const fresh     = isNew(deal.createdAt);
@@ -106,8 +124,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const promoType = getPromoType(deal.title, deal.description, deal.url);
   const isPromo   = promoType !== null;
 
-  // Inflated RRP: OzBargain posts often invent a high "was" price for cheap items.
-  // If deal_price < $30 and "original" is 8x higher, suppress all discount display.
   const hasInflatedRrp =
     deal.originalPrice != null &&
     deal.dealPrice != null &&
@@ -130,9 +146,15 @@ export default function DealCard({ deal }: { deal: Deal }) {
   const isEnding = !!deal.expiresAt &&
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
 
-  const sourceLabel            = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
+  const insight     = dealInsight(deal, discountPct, saveAmount, isPromo);
+  const sourceLabel = SOURCE_LABELS[deal.source ?? ""] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
-  const isStale                = hoursAgo > 12;
+  const isStale = hoursAgo > 12;
+
+  const ctaLabel = expired   ? "Expired"
+    : isEnding               ? "Buy Now →"
+    : isHot                  ? "Grab This Deal →"
+    : "View Deal →";
 
   function handleClick(e: MouseEvent<HTMLAnchorElement>) {
     if (expired) e.preventDefault();
@@ -148,7 +170,9 @@ export default function DealCard({ deal }: { deal: Deal }) {
       className={`group flex flex-col rounded-2xl border bg-white overflow-hidden transition-all duration-200 ${
         expired
           ? "opacity-50 cursor-not-allowed border-gray-100 shadow-sm"
-          : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 cursor-pointer"
+          : isHot
+            ? "border-red-100 shadow-sm hover:shadow-xl hover:shadow-red-500/10 hover:-translate-y-1 hover:border-red-200 cursor-pointer"
+            : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 cursor-pointer"
       }`}
     >
       {/* Image / placeholder */}
@@ -165,15 +189,13 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </span>
         )}
 
-        {/* Discount badge — suppressed for promo deals */}
         {!isPromo && discountPct != null && discountPct > 0 && (
-          <div className="absolute top-3 right-3 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-red-500 shadow-lg shadow-red-500/30 text-white">
+          <div className="absolute top-3 right-3 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-red-500 shadow-lg shadow-red-500/30 text-white transition-transform duration-200 group-hover:scale-110">
             <span className="text-xs font-bold leading-none">-{discountPct}%</span>
             <span className="text-[9px] leading-none opacity-80">OFF</span>
           </div>
         )}
 
-        {/* Promo type badge — replaces discount % for referral/cashback/etc. */}
         {isPromo && (
           <div className="absolute top-3 right-3 flex items-center gap-1 bg-violet-600 text-white text-[9px] font-bold px-2 py-1 rounded-full shadow-md max-w-[80px] text-center leading-tight">
             <Tag className="h-2.5 w-2.5 shrink-0" />
@@ -181,11 +203,16 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </div>
         )}
 
-        {/* Priority label: Hot > New > Ending Soon */}
+        {/* Priority: Hot > Trending > New > Ending Soon */}
         {isHot && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <Flame className="h-2.5 w-2.5" />
             HOT DEAL
+          </div>
+        ) : trending && !expired ? (
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-violet-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+            <TrendingUp className="h-2.5 w-2.5" />
+            TRENDING
           </div>
         ) : fresh && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md shadow-orange-500/30">
@@ -202,7 +229,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
 
       {/* Body */}
       <div className="flex flex-col gap-2 p-3 sm:p-4 flex-1">
-        {/* Category pill */}
         <span className={`self-start text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${style.badge}`}>
           {style.emoji} {cat}
         </span>
@@ -211,7 +237,10 @@ export default function DealCard({ deal }: { deal: Deal }) {
           {deal.title}
         </p>
 
-        {/* Pricing */}
+        {insight && (
+          <p className="text-[11px] text-gray-400 italic leading-snug">{insight}</p>
+        )}
+
         <div className="flex items-baseline gap-2 mt-auto pt-1 flex-wrap">
           {deal.dealPrice != null && (
             <span className="text-xl font-extrabold text-indigo-600">
@@ -225,7 +254,6 @@ export default function DealCard({ deal }: { deal: Deal }) {
           )}
         </div>
 
-        {/* Save $X — suppressed for promo deals */}
         {saveAmount != null && saveAmount > 1 && (
           <span className="self-start text-xs font-bold text-green-700 bg-green-50 border border-green-100 rounded-md px-2 py-0.5 flex items-center gap-1">
             <Sparkles className="h-3 w-3 shrink-0" />
@@ -233,9 +261,7 @@ export default function DealCard({ deal }: { deal: Deal }) {
           </span>
         )}
 
-        {/* Footer */}
         <div className="mt-2 pt-2.5 border-t border-gray-50 space-y-2">
-          {/* Source row */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm">{deal.country === "IN" ? "🇮🇳" : "🇦🇺"}</span>
@@ -251,29 +277,31 @@ export default function DealCard({ deal }: { deal: Deal }) {
             {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
 
-          {/* CCC verified badge — price drop confirmed by price-tracking data */}
           {deal.source === "camelcamelcamel" && !expired && (
             <p className="text-[10px] text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1 leading-snug">
               ✓ Price drop verified by CamelCamelCamel
             </p>
           )}
 
-          {/* Stale price warning — listing is > 12h old, price likely changed */}
           {isStale && deal.source !== "camelcamelcamel" && !expired && (
             <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
               Listed {ageLabel} — verify current price on retailer site.
             </p>
           )}
 
-          {/* CTA */}
+          {/* CTA — colour and label reflect urgency level */}
           <div
-            className={`w-full text-center text-sm font-bold py-2 rounded-xl transition-colors ${
+            className={`w-full text-center text-sm font-bold py-2.5 rounded-xl transition-all duration-150 ${
               expired
                 ? "bg-gray-100 text-gray-400"
-                : "bg-blue-600 text-white group-hover:bg-blue-700"
+                : isEnding
+                  ? "bg-amber-500 text-white group-hover:bg-amber-600 group-hover:shadow-md group-hover:shadow-amber-500/30"
+                  : isHot
+                    ? "bg-red-500 text-white group-hover:bg-red-600 group-hover:shadow-md group-hover:shadow-red-500/30"
+                    : "bg-blue-600 text-white group-hover:bg-blue-700 group-hover:shadow-md group-hover:shadow-blue-500/20"
             }`}
           >
-            {expired ? "Expired" : "View Deal →"}
+            {ctaLabel}
           </div>
         </div>
       </div>
