@@ -1,6 +1,6 @@
 "use client";
 import type { MouseEvent } from "react";
-import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp, TrendingDown } from "lucide-react";
+import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
 const AMAZON_TAGS: Record<string, string> = {
@@ -155,11 +155,15 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
      deal.dealPrice < 30 &&
      deal.originalPrice / deal.dealPrice >= 8);
 
+  // True only when we recalculated from real prices — guarantees the number is correct
+  const discountVerified = calculatedDiscount !== null && !hasInflatedRrp && !isPromo;
+
   const discountPct = isPromo || hasInflatedRrp ? null
-    // When prices are present, always recalculate — never trust DB discountPct blindly
+    // Prices present → always use calculated value (ignores DB)
     : calculatedDiscount != null ? calculatedDiscount
-    : deal.discountPercentage != null ? deal.discountPercentage
-    : deal.discountPct        != null ? deal.discountPct
+    // DB-only fallback: discard anything >80% — can't verify without prices
+    : deal.discountPercentage != null ? (deal.discountPercentage <= 80 ? deal.discountPercentage : null)
+    : deal.discountPct        != null ? (deal.discountPct        <= 80 ? deal.discountPct        : null)
     : null;
 
   const saveAmount = isPromo || hasInflatedRrp ? null : calculatedSavings;
@@ -211,7 +215,8 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           </span>
         )}
 
-        {!isPromo && discountPct != null && discountPct > 0 && (
+        {/* Only show % when we verified it from actual prices — no DB guesses */}
+        {discountVerified && discountPct != null && discountPct > 0 && (
           <div className="absolute top-3 right-3 flex flex-col items-center justify-center w-12 h-12 rounded-full bg-red-500 shadow-lg shadow-red-500/30 text-white transition-transform duration-200 group-hover:scale-110">
             <span className="text-xs font-bold leading-none">-{discountPct}%</span>
             <span className="text-[9px] leading-none opacity-80">OFF</span>
@@ -293,7 +298,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
             <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-sm">{deal.country === "IN" ? "🇮🇳" : "🇦🇺"}</span>
               <span className="text-xs font-semibold text-gray-700 truncate">{sourceLabel}</span>
-              <span className="text-[10px] text-gray-400 shrink-0">{ageLabel}</span>
+              <span className="text-[10px] text-gray-400 shrink-0">Updated {ageLabel}</span>
             </div>
             {expiry && expiry !== "Expired" && (
               <span className="flex items-center gap-1 text-[11px] text-amber-500 font-medium shrink-0">
@@ -304,13 +309,16 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
             {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
 
-          {deal.source === "camelcamelcamel" && !expired && (
-            <p className="text-[10px] text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1 leading-snug">
-              ✓ Price drop verified by CamelCamelCamel
+          {(discountVerified || deal.source === "camelcamelcamel") && !expired && (
+            <p className="text-[10px] text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1 leading-snug flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3 shrink-0" />
+              {deal.source === "camelcamelcamel"
+                ? "Price drop verified by CamelCamelCamel"
+                : "Verified deal — prices cross-checked"}
             </p>
           )}
 
-          {isStale && deal.source !== "camelcamelcamel" && !expired && (
+          {isStale && !discountVerified && deal.source !== "camelcamelcamel" && !expired && (
             <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
               Listed {ageLabel} — verify current price on retailer site.
             </p>
