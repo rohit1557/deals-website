@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   const token    = req.headers.get("x-cleanup-token") ?? "";
-  const expected = process.env.CRON_SECRET ?? "";
+  const expected = process.env.CRON_SECRET ?? process.env.LOOPS_API_KEY ?? "";
   if (!expected || token !== expected) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
