@@ -34,6 +34,32 @@ function cleanTitle(title: string): string {
     .trim();
 }
 
+// CCC titles carry the real prices: "... to $678.54 from $724.80"
+// The DB deal_price column stores the dollar drop amount, not the current price.
+function parsePricesFromTitle(title: string): { dealPrice: number | null; originalPrice: number | null; dropPct: number | null } {
+  const priceMatch = title.match(/to\s+\$([\d,]+\.?\d*)\s+from\s+\$([\d,]+\.?\d*)/i);
+  const dropMatch  = title.match(/down\s+([\d.]+)%/i);
+
+  if (priceMatch) {
+    const dealPrice     = parseFloat(priceMatch[1].replace(/,/g, ""));
+    const originalPrice = parseFloat(priceMatch[2].replace(/,/g, ""));
+    const dropPct = dropMatch
+      ? Math.round(parseFloat(dropMatch[1]))
+      : originalPrice > dealPrice
+        ? Math.round((1 - dealPrice / originalPrice) * 100)
+        : null;
+    return { dealPrice, originalPrice, dropPct };
+  }
+  return { dealPrice: null, originalPrice: null, dropPct: null };
+}
+
+// Display URL shown in the image — includes affiliate tag so it's a complete link
+function shortUrl(amazonUrl: string): string {
+  const m = amazonUrl.match(/\/dp\/([A-Z0-9]{10})/);
+  const tag = amazonUrl.match(/[?&]tag=([^&]+)/)?.[1] ?? "dealdrop0d5-22";
+  return m ? `amazon.com.au/dp/${m[1]}?tag=${tag}` : "amazon.com.au";
+}
+
 export async function generateImage(
   deal: ScoredDeal,
   rank: number,
@@ -68,14 +94,21 @@ export async function generateImage(
       }, bgBase64);
     }
 
+    // Try to extract correct prices from title (CCC stores drop amount, not current price)
+    const fromTitle = parsePricesFromTitle(deal.title);
+    const dealPrice     = fromTitle.dealPrice     ?? deal.dealPrice;
+    const originalPrice = fromTitle.originalPrice ?? deal.originalPrice;
+    const dropPct       = fromTitle.dropPct       ?? deal.dropPct;
+
     const title = cleanTitle(deal.title);
     const shortTitle = title.length > 75 ? title.slice(0, 72) + "…" : title;
 
     await page.evaluate(
-      ({ title, dealPrice, originalPrice, dropPct, rankLbl }) => {
+      ({ title, dealPrice, originalPrice, dropPct, rankLbl, ctaUrl }) => {
         document.getElementById("rank-badge")!.textContent = rankLbl;
         document.getElementById("deal-title")!.textContent = title;
         document.getElementById("deal-price")!.textContent = dealPrice;
+        document.getElementById("cta-url")!.textContent = ctaUrl;
 
         const wasEl  = document.getElementById("was-price")!;
         const dropEl = document.getElementById("drop-badge")!;
@@ -91,10 +124,11 @@ export async function generateImage(
       },
       {
         title: shortTitle,
-        dealPrice: deal.dealPrice != null ? formatAUD(deal.dealPrice) : "Great Price",
-        originalPrice: deal.originalPrice != null ? formatAUD(deal.originalPrice) : null,
-        dropPct: deal.dropPct,
+        dealPrice: dealPrice != null ? formatAUD(dealPrice) : "Great Price",
+        originalPrice: originalPrice != null ? formatAUD(originalPrice) : null,
+        dropPct,
         rankLbl: rankLabel(rank),
+        ctaUrl: shortUrl(deal.amazonUrl),
       },
     );
 
