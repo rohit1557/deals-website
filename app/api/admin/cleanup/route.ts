@@ -2,6 +2,17 @@ import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
 
+export async function GET(_req: NextRequest) {
+  const rows = await db.$queryRaw<{url: string, title: string}[]>`
+    SELECT url, title FROM deals
+    WHERE is_active = true
+      AND (url LIKE '%amazon.in%' OR url LIKE '%amazon.com.au%' OR url LIKE '%amazon.com%')
+    ORDER BY created_at DESC
+    LIMIT 20
+  `;
+  return Response.json(rows);
+}
+
 export async function POST(req: NextRequest) {
   const results: Record<string, number> = {};
 
