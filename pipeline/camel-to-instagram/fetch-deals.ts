@@ -24,7 +24,7 @@ export async function fetchDeals(): Promise<RawDeal[]> {
 
   try {
     const result = await client.query(`
-      SELECT title, url, deal_price, original_price, discount_pct, created_at, description
+      SELECT title, url, deal_price, original_price, discount_pct, updated_at AS created_at, description
       FROM deals
       WHERE is_active = true
         AND source = 'camelcamelcamel'
