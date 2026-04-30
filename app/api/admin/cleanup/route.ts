@@ -23,7 +23,16 @@ export async function POST(req: NextRequest) {
   `;
   results.india_null_price_deactivated = nullPriceResult;
 
-  // 3. Deactivate duplicate India deals — same title+country, keep only the newest updated_at
+  // 3. Deactivate Amazon browse/category URLs — /b/ or /s? paths with no /dp/ASIN (not product pages)
+  const amazonBrowseResult = await db.$executeRaw`
+    UPDATE deals SET is_active = false
+    WHERE is_active = true
+      AND (url LIKE '%amazon.in%' OR url LIKE '%amazon.com.au%' OR url LIKE '%amazon.com%')
+      AND url NOT SIMILAR TO '%(amazon\.[a-z.]+/dp/[A-Z0-9]{10}|amazon\.[a-z.]+/gp/product/[A-Z0-9]{10})%'
+  `;
+  results.amazon_browse_urls_deactivated = amazonBrowseResult;
+
+  // 4. Deactivate duplicate India deals — same title+country, keep only the newest updated_at
   const dupResult = await db.$executeRaw`
     UPDATE deals d SET is_active = false
     WHERE d.is_active = true
@@ -39,7 +48,7 @@ export async function POST(req: NextRequest) {
   `;
   results.duplicates_deactivated = dupResult;
 
-  // 4. Summary of remaining India deals
+  // 5. Summary of remaining India deals
   const remaining = await db.deal.count({
     where: { isActive: true, country: "IN" },
   });
