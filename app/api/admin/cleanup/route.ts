@@ -4,11 +4,10 @@ import { db } from "@/lib/db";
 
 
 export async function GET(_req: NextRequest) {
-  const rows = await db.$queryRaw<{id: string, url: string, title: string, is_active: boolean}[]>`
-    SELECT id, url, title, is_active FROM deals
-    WHERE url LIKE '%amazon.in%'
-    ORDER BY is_active DESC, created_at DESC
-    LIMIT 30
+  const rows = await db.$queryRaw<{id: string, url: string, title: string}[]>`
+    SELECT id, url, title FROM deals
+    WHERE is_active = true AND country = 'IN'
+    ORDER BY updated_at DESC
   `;
   return Response.json(rows);
 }
