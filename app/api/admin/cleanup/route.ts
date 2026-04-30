@@ -1,20 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
-// Temporary: restore India deals incorrectly deactivated by over-broad null-price rule
-export async function GET(_req: NextRequest) {
-  const restored = await db.$executeRaw`
-    UPDATE deals SET is_active = true
-    WHERE is_active = false
-      AND country = 'IN'
-      AND lower(source) = 'indiadeals'
-      AND deal_price IS NULL
-      AND url NOT LIKE '%reddit.com%'
-      AND url NOT LIKE '%redd.it%'
-  `;
-  const remaining = await db.deal.count({ where: { isActive: true, country: "IN" } });
-  return Response.json({ restored, active_india_deals_remaining: remaining });
-}
 
 export async function POST(req: NextRequest) {
   const results: Record<string, number> = {};
