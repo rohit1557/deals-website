@@ -16,6 +16,8 @@ export type Deal = {
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
+  votes?: number;
+  commentsCount?: number;
 };
 
 export type Category =

@@ -173,6 +173,16 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
   const isEnding = !!deal.expiresAt &&
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
 
+  // DesiDime engagement badges — based on community votes (hotness score)
+  const votes = deal.votes ?? 0;
+  const engagementBadge: "hot" | "trending" | "popular" | null =
+    deal.source === "desidime" && !expired
+      ? votes >= 100 ? "hot"
+      : votes >= 30  ? "trending"
+      : votes >= 10  ? "popular"
+      : null
+      : null;
+
   const insight     = dealInsight(deal, discountPct, saveAmount, isPromo);
   const sourceLabel = SOURCE_LABELS[(deal.source ?? "").toLowerCase()] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
@@ -231,7 +241,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           </div>
         )}
 
-        {/* Priority: Hot > Trending > All-Time Low > New > Ending Soon */}
+        {/* Priority: Hot > Trending > Engagement > All-Time Low > New > Ending Soon */}
         {isHot && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <Flame className="h-2.5 w-2.5" />
@@ -241,6 +251,18 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-violet-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <TrendingUp className="h-2.5 w-2.5" />
             TRENDING
+          </div>
+        ) : engagementBadge === "hot" ? (
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+            🔥 {votes}° HOT
+          </div>
+        ) : engagementBadge === "trending" ? (
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+            📈 {votes}° TRENDING
+          </div>
+        ) : engagementBadge === "popular" ? (
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+            ⭐ POPULAR
           </div>
         ) : deal.source === "camelcamelcamel" && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-emerald-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
@@ -314,7 +336,15 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
             {expired && <span className="text-[11px] text-red-400 font-medium shrink-0">Expired</span>}
           </div>
 
-          {(discountVerified || deal.source === "camelcamelcamel") && !expired && (
+          {deal.source === "desidime" && votes > 0 && !expired && (
+            <p className="text-[10px] text-orange-700 bg-orange-50 rounded-lg px-2 py-1 leading-snug flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3 shrink-0" />
+              {votes >= 50
+                ? `Verified by ${votes}° community votes on DesiDime`
+                : `Community deal — ${votes}° votes on DesiDime`}
+            </p>
+          )}
+          {(discountVerified || deal.source === "camelcamelcamel") && deal.source !== "desidime" && !expired && (
             <p className="text-[10px] text-emerald-700 bg-emerald-50 rounded-lg px-2 py-1 leading-snug flex items-center gap-1">
               <ShieldCheck className="h-3 w-3 shrink-0" />
               {deal.source === "camelcamelcamel"
