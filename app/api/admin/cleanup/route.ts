@@ -3,14 +3,6 @@ import { db } from "@/lib/db";
 
 
 
-export async function GET(_req: NextRequest) {
-  const rows = await db.$queryRaw<{id: string, url: string, title: string}[]>`
-    SELECT id, url, title FROM deals
-    WHERE is_active = true AND country = 'IN'
-    ORDER BY updated_at DESC
-  `;
-  return Response.json(rows);
-}
 
 export async function POST(req: NextRequest) {
   const results: Record<string, number> = {};
@@ -43,7 +35,16 @@ export async function POST(req: NextRequest) {
   `;
   results.amazon_browse_urls_deactivated = amazonBrowseResult;
 
-  // 4. Deactivate deals whose URLs are non-deal software/SaaS/blog domains
+  // 4. Deactivate amzn.to short links — they redirect to Amazon but can land on search/category pages.
+  //    These are unverifiable without following the redirect. Old short links (pre-2021) are all stale.
+  const amznShortResult = await db.$executeRaw`
+    UPDATE deals SET is_active = false
+    WHERE is_active = true
+      AND url LIKE '%amzn.to%'
+  `;
+  results.amzn_short_links_deactivated = amznShortResult;
+
+  // 5. Deactivate deals whose URLs are non-deal software/SaaS/blog domains
   const nonDealDomainResult = await db.$executeRaw`
     UPDATE deals SET is_active = false
     WHERE is_active = true
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
   `;
   results.non_deal_domains_deactivated = nonDealDomainResult;
 
-  // 5. Deactivate duplicate India deals — same title+country, keep only the newest updated_at
+  // 6. Deactivate duplicate India deals — same title+country, keep only the newest updated_at
   const dupResult = await db.$executeRaw`
     UPDATE deals d SET is_active = false
     WHERE d.is_active = true
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
   `;
   results.duplicates_deactivated = dupResult;
 
-  // 6. Summary of remaining India deals
+  // 7. Summary of remaining India deals
   const remaining = await db.deal.count({
     where: { isActive: true, country: "IN" },
   });
