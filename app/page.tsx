@@ -414,4 +414,4 @@ export default async function HomePage({ searchParams }: PageProps) {
   );
 }
 
-export const revalidate = 300;
+export const revalidate = 1800; // 30 min — deals refresh every 2h on Railway
