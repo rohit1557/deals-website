@@ -168,6 +168,7 @@ export async function uploadAndPost(
   imagePaths: string[],
   caption: string,
   storyLinkUrl?: string,
+  storyImagePath?: string,
 ): Promise<void> {
   const missing = REQUIRED_VARS.filter(k => !process.env[k]);
   if (missing.length > 0) {
@@ -194,8 +195,13 @@ export async function uploadAndPost(
   // Post a Story with a clickable link sticker for the top deal
   if (storyLinkUrl) {
     try {
+      let storyImageUrl = imageUrls[0];
+      if (storyImagePath) {
+        console.log("[instagram] Uploading Story image to Cloudinary…");
+        storyImageUrl = await uploadToCloudinary(storyImagePath);
+      }
       console.log(`[instagram] Posting Story with link sticker → ${storyLinkUrl}`);
-      const storyId = await postStory(accountId, token, imageUrls[0], storyLinkUrl);
+      const storyId = await postStory(accountId, token, storyImageUrl, storyLinkUrl);
       console.log(`[instagram] Story published! Media ID: ${storyId}`);
     } catch (err) {
       console.warn("[instagram] Story post failed (feed post still succeeded):", err);
