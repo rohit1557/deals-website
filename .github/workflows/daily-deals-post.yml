@@ -27,6 +27,11 @@ jobs:
         run: npx puppeteer browsers install chrome
       - name: Generate deal images and captions
         env:
+          POST_TO_INSTAGRAM: "true"
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
