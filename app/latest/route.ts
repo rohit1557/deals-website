@@ -15,12 +15,16 @@ export async function GET(_req: NextRequest) {
     // Table not created yet — fall through
   }
 
-  // 2. Fall back to the top deal from the main deals table
+  // 2. Fall back to top Amazon AU deal from the main deals table
   try {
     const deal = await db.deal.findFirst({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        country:  "AU",
+        url:      { contains: "amazon.com.au" },
+      },
       orderBy: { discountPct: "desc" },
-      select: { url: true },
+      select:  { url: true },
     });
     if (deal?.url) return Response.redirect(deal.url, 302);
   } catch {
