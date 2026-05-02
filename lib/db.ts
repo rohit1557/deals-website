@@ -1,12 +1,14 @@
-import { neon } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 
-// Use Neon's HTTP transport instead of TCP — eliminates cold-start connection latency
-// in Vercel serverless functions. Each query is a single fetch() call.
+// Route Pool queries over HTTP fetch instead of WebSockets — no ws dependency,
+// eliminates cold-start TCP latency in Vercel serverless functions.
+neonConfig.poolQueryViaFetch = true;
+
 function createClient() {
-  const sql = neon(process.env.DATABASE_URL!);
-  const adapter = new PrismaNeon(sql);
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
+  const adapter = new PrismaNeon(pool);
   return new PrismaClient({ adapter });
 }
 
