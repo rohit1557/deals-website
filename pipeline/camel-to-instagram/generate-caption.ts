@@ -45,6 +45,8 @@ export function generateCaption(deal: ScoredDeal, rank: number): string {
   const catTags = CATEGORY_TAGS[deal.category] ?? [];
   const allTags = [...HASHTAGS, ...catTags].join(" ");
 
+  const shortUrl = deal.amazonUrl.replace("https://www.", "");
+
   return [
     `${emoji} ${rankLabel}`,
     ``,
@@ -52,7 +54,7 @@ export function generateCaption(deal: ScoredDeal, rank: number): string {
     ``,
     `${priceStr}${wasStr}${dropStr}`,
     ``,
-    `Link in bio to grab this deal! 👆`,
+    `🛒 ${shortUrl}`,
     ``,
     allTags,
   ].join("\n");
@@ -67,6 +69,8 @@ export async function enhanceCaptionWithGroq(deal: ScoredDeal, rank: number): Pr
   const dropStr  = deal.dropPct != null ? ` — ${deal.dropPct}% off` : "";
   const rankLabel = rank === 1 ? "Deal of the Day" : `#${rank} deal today`;
 
+  const shortUrl = deal.amazonUrl.replace("https://www.", "");
+
   const prompt = `Write a punchy Instagram caption for an Australian deals page called DealDrop.
 Product: ${deal.title}
 Price: ${priceStr}${wasStr}${dropStr}
@@ -75,12 +79,11 @@ Position: ${rankLabel}
 Rules:
 - Start with 2-3 relevant emojis on the first line
 - Mention the discount or saving angle in an exciting way
-- Keep it under 180 characters before hashtags
-- Second-to-last line: "Link in bio → dealdrop.au"
-- Last line hashtags only: #DealDrop #AussieDeals #AmazonAustralia #PriceDrop #BargainHunter
+- Keep it under 150 characters (body only, no URL or hashtags)
+- Do NOT include any URL or hashtags — those will be added separately
 - No quotation marks around the response
 
-Reply with just the caption, no explanation.`;
+Reply with just the body text, no explanation.`;
 
   try {
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -104,10 +107,16 @@ Reply with just the caption, no explanation.`;
     }
 
     const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const content = data.choices?.[0]?.message?.content?.trim();
-    if (content) {
+    const body = data.choices?.[0]?.message?.content?.trim();
+    if (body) {
       console.log(`[generate-caption] Groq caption generated for deal #${rank}`);
-      return content;
+      return [
+        body,
+        "",
+        `🛒 ${shortUrl}`,
+        "",
+        [...HASHTAGS, ...(CATEGORY_TAGS[deal.category] ?? [])].join(" "),
+      ].join("\n");
     }
   } catch (err) {
     console.warn("[generate-caption] Groq failed, using template:", err);
