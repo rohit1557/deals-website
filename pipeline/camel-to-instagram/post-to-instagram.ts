@@ -136,17 +136,18 @@ async function postStory(
   imageUrl: string,
   linkUrl: string,
 ): Promise<string> {
-  // Create Story container with link sticker
+  // Meta's Graph API requires form-encoded params for link_sticker_url to work
+  const params = new URLSearchParams({
+    image_url:        imageUrl,
+    media_type:       "STORIES",
+    link_sticker_url: linkUrl,
+    access_token:     token,
+  });
+
   const createRes = await fetch(`${GRAPH_API}/${accountId}/media`, {
     method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({
-      image_url:        imageUrl,
-      media_type:       "STORIES",
-      link_sticker_url: linkUrl,
-      access_token:     token,
-    }),
-    signal: AbortSignal.timeout(20_000),
+    body:    params,
+    signal:  AbortSignal.timeout(20_000),
   });
   if (!createRes.ok) throw new Error(`Story container failed: ${createRes.status} ${await createRes.text()}`);
   const { id: containerId } = await createRes.json() as { id: string };
