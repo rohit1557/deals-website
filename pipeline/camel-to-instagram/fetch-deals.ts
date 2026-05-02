@@ -1,10 +1,10 @@
 const AFFILIATE_TAG = process.env.AFFILIATE_TAG ?? "dealdrop0d5-22";
 
-// Fetch from AU feed first; if it yields fewer than 15 items, supplement with global.
-// Global feed covers US ASINs that also exist on Amazon AU.
+// AU-only feed — products tracked here are guaranteed to be on Amazon AU.
+// The global camelcamelcamel.com feed covers US ASINs that don't exist on
+// amazon.com.au, so we never use it.
 const FEEDS = [
   "https://au.camelcamelcamel.com/top_drops/feed",
-  "https://camelcamelcamel.com/top_drops/feed",
 ];
 
 export interface RawDeal {
