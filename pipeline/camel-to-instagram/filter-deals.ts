@@ -5,8 +5,8 @@ const VISUAL_CATEGORIES = ["Tech", "Gaming", "Home", "Fashion", "Beauty"];
 // Only post deals with meaningful real discounts.
 // OR logic: a big % drop on a cheap item OR a big saving on an expensive item both qualify.
 const MIN_DROP_PCT     = 20;   // minimum % off
-const MIN_SAVINGS_LOW  = 30;   // minimum $ saved (at 20%+)
-const MIN_SAVINGS_HIGH = 70;   // if savings >= $70, only needs 15%+ drop
+const MIN_SAVINGS_LOW  = 20;   // minimum $ saved (at 20%+)
+const MIN_SAVINGS_HIGH = 60;   // if savings >= $60, only needs 15%+ drop
 const MIN_DEAL_PRICE   = 50;   // don't post anything under $50
 const MAX_AGE_HOURS    = 48;
 

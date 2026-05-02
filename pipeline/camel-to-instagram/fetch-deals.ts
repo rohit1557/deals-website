@@ -1,14 +1,9 @@
 const AFFILIATE_TAG = process.env.AFFILIATE_TAG ?? "dealdrop0d5-22";
 
-// AU-only feeds — products tracked here are guaranteed to be on Amazon AU.
-// Category feeds give 20 items each, broadening pool beyond the 20-item "all" feed.
+// CCC AU top_drops feed — 20 items, updated throughout the day.
+// Category params are silently ignored by CCC AU (all return same feed).
 const FEEDS = [
   "https://au.camelcamelcamel.com/top_drops/feed",
-  "https://au.camelcamelcamel.com/top_drops/feed?category=electronics",
-  "https://au.camelcamelcamel.com/top_drops/feed?category=computers",
-  "https://au.camelcamelcamel.com/top_drops/feed?category=video_games",
-  "https://au.camelcamelcamel.com/top_drops/feed?category=home_kitchen",
-  "https://au.camelcamelcamel.com/top_drops/feed?category=sports",
 ];
 
 export interface RawDeal {

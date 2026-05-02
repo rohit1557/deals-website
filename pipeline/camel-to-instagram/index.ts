@@ -66,8 +66,8 @@ async function main() {
   const topDeals: ScoredDeal[] = candidates.slice(0, MAX_DEALS);
 
   if (topDeals.length === 0) {
-    console.error("[pipeline] No deals passed filters (drop% < 20% or too old).");
-    process.exit(1);
+    console.log("[pipeline] No qualifying deals today — skipping post. Nothing to worry about.");
+    process.exit(0);
   }
 
   console.log(`[pipeline] Generating images for ${topDeals.length} deal(s)...`);
