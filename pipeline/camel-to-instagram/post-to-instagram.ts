@@ -136,18 +136,17 @@ async function postStory(
   imageUrl: string,
   linkUrl: string,
 ): Promise<string> {
-  // Meta's Graph API requires form-encoded params for link_sticker_url to work
-  const params = new URLSearchParams({
+  // Pass params as query string — Meta's documented approach for link_sticker_url
+  const qs = new URLSearchParams({
     image_url:        imageUrl,
     media_type:       "STORIES",
     link_sticker_url: linkUrl,
     access_token:     token,
   });
 
-  const createRes = await fetch(`${GRAPH_API}/${accountId}/media`, {
-    method:  "POST",
-    body:    params,
-    signal:  AbortSignal.timeout(20_000),
+  const createRes = await fetch(`${GRAPH_API}/${accountId}/media?${qs}`, {
+    method: "POST",
+    signal: AbortSignal.timeout(20_000),
   });
   if (!createRes.ok) throw new Error(`Story container failed: ${createRes.status} ${await createRes.text()}`);
   const { id: containerId } = await createRes.json() as { id: string };
@@ -169,7 +168,6 @@ export async function uploadAndPost(
   imagePaths: string[],
   caption: string,
   storyLinkUrl?: string,
-  storyImagePath?: string,  // 1080x1920 Story image; falls back to feed image if not provided
 ): Promise<void> {
   const missing = REQUIRED_VARS.filter(k => !process.env[k]);
   if (missing.length > 0) {
@@ -196,14 +194,8 @@ export async function uploadAndPost(
   // Post a Story with a clickable link sticker for the top deal
   if (storyLinkUrl) {
     try {
-      // Upload the 1080x1920 story image if provided, otherwise reuse the feed image
-      let storyImageUrl = imageUrls[0];
-      if (storyImagePath) {
-        console.log("[instagram] Uploading Story image to Cloudinary…");
-        storyImageUrl = await uploadToCloudinary(storyImagePath);
-      }
       console.log(`[instagram] Posting Story with link sticker → ${storyLinkUrl}`);
-      const storyId = await postStory(accountId, token, storyImageUrl, storyLinkUrl);
+      const storyId = await postStory(accountId, token, imageUrls[0], storyLinkUrl);
       console.log(`[instagram] Story published! Media ID: ${storyId}`);
     } catch (err) {
       console.warn("[instagram] Story post failed (feed post still succeeded):", err);
