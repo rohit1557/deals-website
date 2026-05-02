@@ -130,9 +130,44 @@ const REQUIRED_VARS = [
   "INSTAGRAM_ACCOUNT_ID",
 ];
 
+async function postStory(
+  accountId: string,
+  token: string,
+  imageUrl: string,
+  linkUrl: string,
+): Promise<string> {
+  // Create Story container with link sticker
+  const createRes = await fetch(`${GRAPH_API}/${accountId}/media`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({
+      image_url:        imageUrl,
+      media_type:       "STORIES",
+      link_sticker_url: linkUrl,
+      access_token:     token,
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!createRes.ok) throw new Error(`Story container failed: ${createRes.status} ${await createRes.text()}`);
+  const { id: containerId } = await createRes.json() as { id: string };
+
+  await waitForContainer(containerId, token);
+
+  const publishRes = await fetch(`${GRAPH_API}/${accountId}/media_publish`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ creation_id: containerId, access_token: token }),
+    signal:  AbortSignal.timeout(20_000),
+  });
+  if (!publishRes.ok) throw new Error(`Story publish failed: ${publishRes.status} ${await publishRes.text()}`);
+  const data = await publishRes.json() as { id: string };
+  return data.id;
+}
+
 export async function uploadAndPost(
   imagePaths: string[],
   caption: string,
+  storyLinkUrl?: string,  // if set, also posts a Story with a clickable link sticker
 ): Promise<void> {
   const missing = REQUIRED_VARS.filter(k => !process.env[k]);
   if (missing.length > 0) {
@@ -154,6 +189,16 @@ export async function uploadAndPost(
     console.log(`[instagram] Posting carousel with ${imageUrls.length} slides…`);
     mediaId = await publishCarousel(accountId, token, imageUrls, caption);
   }
+  console.log(`[instagram] Feed post published! Media ID: ${mediaId}`);
 
-  console.log(`[instagram] Published! Media ID: ${mediaId}`);
+  // Post a Story with a clickable link sticker for the top deal
+  if (storyLinkUrl) {
+    try {
+      console.log(`[instagram] Posting Story with link sticker → ${storyLinkUrl}`);
+      const storyId = await postStory(accountId, token, imageUrls[0], storyLinkUrl);
+      console.log(`[instagram] Story published! Media ID: ${storyId}`);
+    } catch (err) {
+      console.warn("[instagram] Story post failed (feed post still succeeded):", err);
+    }
+  }
 }

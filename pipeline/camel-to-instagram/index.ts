@@ -75,7 +75,9 @@ async function main() {
     const postCaption = topDeals.length === 1
       ? captionParts[0].replace(/^--- Deal 1 ---\nURL: [^\n]+\n\n/, "")
       : multiCaption;
-    await uploadAndPost(imagePaths, postCaption);
+    // Story uses the top deal's full affiliate URL as the clickable link sticker
+    const storyLinkUrl = topDeals[0].amazonUrl;
+    await uploadAndPost(imagePaths, postCaption, storyLinkUrl);
     await markPosted(topDeals.map(d => d.asin));
   } else {
     console.log("\n[pipeline] Done! Files in output/:");
