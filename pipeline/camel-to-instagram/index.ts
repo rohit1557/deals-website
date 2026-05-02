@@ -14,7 +14,7 @@ import path from "path";
 import { writeFileSync, mkdirSync } from "fs";
 import { fetchDeals } from "./fetch-deals";
 import { filterDeals } from "./filter-deals";
-import { generateCaption, generateMultiCaption } from "./generate-caption";
+import { enhanceCaptionWithGroq, generateMultiCaption } from "./generate-caption";
 import { generateImage } from "./generate-image";
 
 const OUTPUT_DIR = process.env.OUTPUT_DIR ?? "./output";
@@ -47,7 +47,7 @@ async function main() {
 
     await generateImage(deal, rank, imgPath);
 
-    const caption = generateCaption(deal, rank);
+    const caption = await enhanceCaptionWithGroq(deal, rank);
     captionParts.push(`--- Deal ${rank} ---\nURL: ${deal.amazonUrl}\n\n${caption}`);
   }
 

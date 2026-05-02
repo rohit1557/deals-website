@@ -58,6 +58,64 @@ export function generateCaption(deal: ScoredDeal, rank: number): string {
   ].join("\n");
 }
 
+export async function enhanceCaptionWithGroq(deal: ScoredDeal, rank: number): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return generateCaption(deal, rank);
+
+  const priceStr = deal.dealPrice != null ? formatPrice(deal.dealPrice) : "great price";
+  const wasStr   = deal.originalPrice != null ? ` (was ${formatPrice(deal.originalPrice)})` : "";
+  const dropStr  = deal.dropPct != null ? ` — ${deal.dropPct}% off` : "";
+  const rankLabel = rank === 1 ? "Deal of the Day" : `#${rank} deal today`;
+
+  const prompt = `Write a punchy Instagram caption for an Australian deals page called DealDrop.
+Product: ${deal.title}
+Price: ${priceStr}${wasStr}${dropStr}
+Position: ${rankLabel}
+
+Rules:
+- Start with 2-3 relevant emojis on the first line
+- Mention the discount or saving angle in an exciting way
+- Keep it under 180 characters before hashtags
+- Second-to-last line: "Link in bio → dealdrop.au"
+- Last line hashtags only: #DealDrop #AussieDeals #AmazonAustralia #PriceDrop #BargainHunter
+- No quotation marks around the response
+
+Reply with just the caption, no explanation.`;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 300,
+        temperature: 0.75,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      console.warn("[generate-caption] Groq API error:", res.status);
+      return generateCaption(deal, rank);
+    }
+
+    const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (content) {
+      console.log(`[generate-caption] Groq caption generated for deal #${rank}`);
+      return content;
+    }
+  } catch (err) {
+    console.warn("[generate-caption] Groq failed, using template:", err);
+  }
+
+  return generateCaption(deal, rank);
+}
+
 export function generateMultiCaption(deals: ScoredDeal[]): string {
   const lines = [
     "🛒 Today's Top Amazon AU Price Drops",

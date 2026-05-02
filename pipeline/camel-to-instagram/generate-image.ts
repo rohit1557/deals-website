@@ -1,7 +1,7 @@
 import puppeteer from "puppeteer";
 import path from "path";
 import fs from "fs";
-import { generateBackground } from "./generate-background";
+import { getCategoryGradient } from "./generate-background";
 import type { ScoredDeal } from "./filter-deals";
 
 const TEMPLATE_PATH = path.resolve(__dirname, "templates/post-template.html");
@@ -101,17 +101,13 @@ export async function generateImage(
   // 1. Try to fetch the actual Amazon product photo
   const hasProductImg = await fetchAmazonProductImage(deal.asin, productPath);
 
-  // 2. Background: use product image (blurred) if we have one, else Gemini
+  // 2. Background: use product image (blurred) if we have one
   let hasBg = false;
   if (hasProductImg) {
-    // Copy product image as background so we can blur it in the template
     fs.copyFileSync(productPath, bgPath);
     hasBg = true;
-  } else {
-    // Gemini generates a product-specific scene using the title
-    const cleanedTitle = cleanTitle(deal.title);
-    hasBg = await generateBackground(deal.category, bgPath, cleanedTitle);
   }
+  // Else: inject a CSS gradient directly — no API call needed
 
   const templateHtml = fs.readFileSync(TEMPLATE_PATH, "utf-8");
 
@@ -125,7 +121,15 @@ export async function generateImage(
     await page.setViewport({ width: 1080, height: 1080, deviceScaleFactor: 2 });
     await page.setContent(templateHtml, { waitUntil: "networkidle0" });
 
-    // Inject background image
+    // Inject category gradient when there's no product image
+    if (!hasProductImg) {
+      const gradient = getCategoryGradient(deal.category);
+      await page.evaluate((grad: string) => {
+        (document.getElementById("bg") as HTMLElement).style.background = grad;
+      }, gradient);
+    }
+
+    // Inject background image (blurred product photo)
     if (hasBg && fs.existsSync(bgPath)) {
       const bgBase64 = fs.readFileSync(bgPath).toString("base64");
       await page.evaluate(
