@@ -6,6 +6,7 @@ import { enhanceCaptionWithGroq, generateMultiCaption } from "./generate-caption
 import { generateImage } from "./generate-image";
 import { uploadAndPost } from "./post-to-instagram";
 import { filterUnposted, markPosted } from "./posted-deals";
+import { generateStoryImage } from "./generate-story";
 
 // Set POST_TO_INSTAGRAM=true to auto-post after generating images.
 // Carousel if multiple deals; single post if only one.
@@ -75,9 +76,13 @@ async function main() {
     const postCaption = topDeals.length === 1
       ? captionParts[0].replace(/^--- Deal 1 ---\nURL: [^\n]+\n\n/, "")
       : multiCaption;
-    // Story uses the top deal's full affiliate URL as the clickable link sticker
+    // Generate a 1080x1920 Story image from the top deal's feed image
+    const storyImagePath = path.join(OUTPUT_DIR, "story-1.png");
+    await generateStoryImage(topDeals[0], imagePaths[0], storyImagePath);
+
+    // Story link sticker points directly to the top deal
     const storyLinkUrl = topDeals[0].amazonUrl;
-    await uploadAndPost(imagePaths, postCaption, storyLinkUrl);
+    await uploadAndPost(imagePaths, postCaption, storyLinkUrl, storyImagePath);
     await markPosted(topDeals.map(d => d.asin));
   } else {
     console.log("\n[pipeline] Done! Files in output/:");
