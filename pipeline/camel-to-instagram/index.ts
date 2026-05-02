@@ -106,7 +106,9 @@ async function main() {
 
   if (AUTO_POST) {
     console.log("\n[pipeline] Posting to Instagram…");
-    await uploadAndPost(imagePaths, postCaption);
+    // Bio link: top deal for single/budget/category, dealdrop.au homepage for top5 carousel
+    const bioLink = POST_TYPE === "top5" ? "https://dealdrop.au" : topDeals[0].amazonUrl;
+    await uploadAndPost(imagePaths, postCaption, bioLink);
     await markPosted(topDeals.map(d => d.asin));
   } else {
     console.log("\n[pipeline] Done! Files in output/:");
