@@ -173,8 +173,13 @@ export async function generateImage(
     const title      = cleanTitle(deal.title);
     const shortTitle = title.length > 65 ? title.slice(0, 62) + "…" : title;
 
+    // Use dollar savings in the badge — avoids mismatch with Amazon's RRP-based %
+    const savingsAbs = deal.savingsAbs ?? (
+      dealPrice != null && originalPrice != null ? originalPrice - dealPrice : null
+    );
+
     await page.evaluate(
-      ({ title, dealPrice, originalPrice, dropPct, rankLbl, ctaUrl }) => {
+      ({ title, dealPrice, originalPrice, savingsBadge, dropPct, rankLbl, ctaUrl }) => {
         document.getElementById("rank-badge")!.textContent = rankLbl;
         document.getElementById("deal-title")!.textContent = title;
         document.getElementById("deal-price")!.textContent = dealPrice;
@@ -187,21 +192,22 @@ export async function generateImage(
           wasEl.textContent = `was ${originalPrice}`;
           wasEl.style.display = "block";
         }
-        if (dropPct) {
-          dropEl.textContent = `-${dropPct}% OFF`;
+        if (savingsBadge) {
+          dropEl.textContent = `SAVE ${savingsBadge}`;
           dropEl.style.display = "block";
-          // Template B watermark
+          // Template B watermark — show % there since it's background/decorative
           const wm = document.getElementById("watermark-pct");
-          if (wm) wm.textContent = `${dropPct}%`;
+          if (wm && dropPct) wm.textContent = `${dropPct}%`;
         }
       },
       {
         title: shortTitle,
-        dealPrice: dealPrice != null ? formatAUD(dealPrice) : "Great Price",
+        dealPrice:    dealPrice    != null ? formatAUD(dealPrice)    : "Great Price",
         originalPrice: originalPrice != null ? formatAUD(originalPrice) : null,
+        savingsBadge: savingsAbs   != null ? formatAUD(Math.round(savingsAbs)) : null,
         dropPct,
         rankLbl: rankLabel(rank),
-        ctaUrl: shortUrl(deal.amazonUrl),
+        ctaUrl:  shortUrl(deal.amazonUrl),
       },
     );
 

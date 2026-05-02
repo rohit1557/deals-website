@@ -58,7 +58,6 @@ const QUESTIONS = [
 function templateCaption(deal: ScoredDeal): string {
   const priceStr   = deal.dealPrice    != null ? formatPrice(deal.dealPrice)    : "Great price";
   const wasStr     = deal.originalPrice!= null ? ` (was ${formatPrice(deal.originalPrice)})` : "";
-  const dropStr    = deal.dropPct      != null ? ` — ${deal.dropPct}% OFF`      : "";
   const savingsStr = deal.savingsAbs   != null ? ` • Save ${formatPrice(deal.savingsAbs)}` : "";
   const catTags    = CATEGORY_TAGS[deal.category] ?? [];
   const shortUrl   = deal.amazonUrl.replace("https://www.", "");
@@ -67,7 +66,7 @@ function templateCaption(deal: ScoredDeal): string {
     pick(HOOKS),
     "",
     `${deal.title}`,
-    `${priceStr}${wasStr}${dropStr}${savingsStr}`,
+    `${priceStr}${wasStr}${savingsStr}`,
     "",
     pick(QUESTIONS),
     "",
@@ -84,14 +83,13 @@ export async function enhanceCaptionWithGroq(deal: ScoredDeal, rank: number): Pr
 
   const priceStr   = deal.dealPrice    != null ? formatPrice(deal.dealPrice)    : "great price";
   const wasStr     = deal.originalPrice!= null ? ` (was ${formatPrice(deal.originalPrice)})` : "";
-  const dropStr    = deal.dropPct      != null ? ` — ${deal.dropPct}% off`      : "";
-  const savingsStr = deal.savingsAbs   != null ? ` (saving ${formatPrice(deal.savingsAbs)})` : "";
+  const savingsStr = deal.savingsAbs   != null ? ` — saving ${formatPrice(deal.savingsAbs)}` : "";
   const shortUrl   = deal.amazonUrl.replace("https://www.", "");
 
   const prompt = `Write a scroll-stopping Instagram caption for an Australian deals page called DealDrop.
 
 Product: ${deal.title}
-Price: ${priceStr}${wasStr}${dropStr}${savingsStr}
+Price: ${priceStr}${wasStr}${savingsStr}
 
 Follow this EXACT structure (3 sections, blank line between each):
 
