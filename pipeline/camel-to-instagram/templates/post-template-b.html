@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1080px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    background: #080810;
+  }
+
+  /* Ambient glow layer */
+  #bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(99,102,241,0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(236,72,153,0.12) 0%, transparent 60%);
+  }
+  #bg.blurred {
+    filter: blur(0px);
+    opacity: 0.3;
+  }
+
+  /* Diagonal accent stripe */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0) 40%,
+      rgba(0,0,0,0.35) 100%
+    );
+  }
+
+  #frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 52px 60px 44px;
+  }
+
+  /* Top bar */
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .brand-name {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: linear-gradient(90deg, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .brand-site {
+    font-size: 16px;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* Big discount watermark */
+  .discount-watermark {
+    position: absolute;
+    right: -20px;
+    top: 80px;
+    font-size: 320px;
+    font-weight: 900;
+    color: rgba(255,255,255,0.03);
+    line-height: 1;
+    letter-spacing: -20px;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* Main body — stacked product on left, info on right */
+  .body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    padding: 20px 0;
+  }
+
+  /* Product image */
+  .product-col {
+    width: 440px;
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .product-frame {
+    width: 420px;
+    height: 420px;
+    border-radius: 32px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 40px 120px rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 18px;
+    mix-blend-mode: multiply;
+  }
+
+  /* Info column */
+  .text-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  /* No product: center everything */
+  .body.no-product {
+    justify-content: center;
+  }
+  .body.no-product .text-col {
+    align-items: center;
+    text-align: center;
+    max-width: 900px;
+  }
+  .body.no-product .deal-title {
+    font-size: 50px;
+  }
+  .body.no-product .deal-price {
+    font-size: 108px;
+  }
+  .body.no-product .drop-badge {
+    font-size: 56px;
+    padding: 14px 36px;
+  }
+
+  .rank-badge {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 9px 22px;
+    border-radius: 100px;
+  }
+
+  .deal-title {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.2;
+    max-width: 540px;
+    color: rgba(255,255,255,0.95);
+  }
+
+  .price-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .deal-price {
+    font-size: 88px;
+    font-weight: 900;
+    letter-spacing: -4px;
+    line-height: 1;
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 30px rgba(74,222,128,0.4));
+  }
+
+  .was-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .was-price {
+    font-size: 22px;
+    color: rgba(255,255,255,0.35);
+    text-decoration: line-through;
+    font-weight: 600;
+  }
+  .drop-badge {
+    background: #ef4444;
+    color: #fff;
+    font-size: 38px;
+    font-weight: 900;
+    padding: 8px 22px;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(239,68,68,0.5);
+    letter-spacing: -0.5px;
+  }
+
+  .cta {
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 14px 28px;
+    border-radius: 14px;
+    box-shadow: 0 8px 30px rgba(99,102,241,0.4);
+    max-width: 540px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: rgba(255,255,255,0.25);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div id="overlay"></div>
+  <div class="discount-watermark" id="watermark-pct"></div>
+
+  <div id="frame">
+    <div class="brand">
+      <span class="brand-name">DealDrop</span>
+      <span class="brand-site">dealdrop.au</span>
+    </div>
+
+    <div class="body no-product" id="content">
+      <div class="product-col" id="product-col">
+        <div class="product-frame">
+          <img id="product-image" src="" alt="Product" />
+        </div>
+      </div>
+
+      <div class="text-col">
+        <div class="rank-badge" id="rank-badge">Deal of the Day</div>
+        <div class="deal-title" id="deal-title">Loading...</div>
+        <div class="price-block">
+          <div class="deal-price" id="deal-price">$0</div>
+          <div class="was-row">
+            <div class="was-price" id="was-price" style="display:none"></div>
+            <div class="drop-badge" id="drop-badge" style="display:none"></div>
+          </div>
+        </div>
+        <div class="cta" id="cta-url">amazon.com.au</div>
+      </div>
+    </div>
+
+    <div class="footer">CamelCamelCamel price data &nbsp;•&nbsp; Amazon Australia</div>
+  </div>
+</body>
+</html>

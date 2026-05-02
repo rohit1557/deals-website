@@ -4,7 +4,11 @@ import fs from "fs";
 import { getCategoryGradient } from "./generate-background";
 import type { ScoredDeal } from "./filter-deals";
 
-const TEMPLATE_PATH = path.resolve(__dirname, "templates/post-template.html");
+const TEMPLATES = [
+  path.resolve(__dirname, "templates/post-template.html"),
+  path.resolve(__dirname, "templates/post-template-b.html"),
+  path.resolve(__dirname, "templates/post-template-c.html"),
+];
 
 function formatAUD(price: number): string {
   return new Intl.NumberFormat("en-AU", {
@@ -109,7 +113,10 @@ export async function generateImage(
   }
   // Else: inject a CSS gradient directly — no API call needed
 
-  const templateHtml = fs.readFileSync(TEMPLATE_PATH, "utf-8");
+  // Rotate templates so every post looks visually different
+  const templatePath = TEMPLATES[rank % TEMPLATES.length];
+  const templateHtml = fs.readFileSync(templatePath, "utf-8");
+  console.log(`[generate-image] Using template: ${path.basename(templatePath)}`);
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -183,6 +190,9 @@ export async function generateImage(
         if (dropPct) {
           dropEl.textContent = `-${dropPct}% OFF`;
           dropEl.style.display = "block";
+          // Template B watermark
+          const wm = document.getElementById("watermark-pct");
+          if (wm) wm.textContent = `${dropPct}%`;
         }
       },
       {
