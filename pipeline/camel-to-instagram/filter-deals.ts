@@ -4,9 +4,9 @@ const VISUAL_CATEGORIES = ["Tech", "Gaming", "Home", "Fashion", "Beauty"];
 
 // Only post deals with meaningful real discounts.
 // OR logic: a big % drop on a cheap item OR a big saving on an expensive item both qualify.
-const MIN_DROP_PCT     = 40;   // minimum % off
-const MIN_SAVINGS_HIGH = 50;   // if savings >= $50, only needs 25%+ drop
-const MIN_SAVINGS_LOW  = 20;   // minimum $ saved
+const MIN_DROP_PCT     = 20;   // minimum % off
+const MIN_SAVINGS_LOW  = 30;   // minimum $ saved (at 20%+)
+const MIN_SAVINGS_HIGH = 70;   // if savings >= $70, only needs 15%+ drop
 const MIN_DEAL_PRICE   = 50;   // don't post anything under $50
 const MAX_AGE_HOURS    = 48;
 
@@ -54,19 +54,25 @@ function scoreDeal(deal: RawDeal): number {
 export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
   const now = Date.now();
 
-  return deals
-    .filter(d => {
-      if (!d.dropPct) return false;
-      if ((d.dealPrice ?? 0) < MIN_DEAL_PRICE) return false;
-      const savings = d.savingsAbs ?? 0;
-      const ageHours = (now - d.pubDate.getTime()) / 3_600_000;
-      if (ageHours > MAX_AGE_HOURS) return false;
-      // Big % drop with at least minimal savings
-      if (d.dropPct >= MIN_DROP_PCT && savings >= MIN_SAVINGS_LOW) return true;
-      // Lower % but big absolute saving (e.g. $200 off a $400 item)
-      if (d.dropPct >= 25 && savings >= MIN_SAVINGS_HIGH) return true;
-      return false;
-    })
+  const passed: RawDeal[] = [];
+
+  for (const d of deals) {
+    const savings  = d.savingsAbs ?? 0;
+    const ageHours = (now - d.pubDate.getTime()) / 3_600_000;
+    const price    = d.dealPrice ?? 0;
+
+    let reason = "";
+    if (!d.dropPct)                                                        reason = "no dropPct";
+    else if (price < MIN_DEAL_PRICE)                                       reason = `price $${price} < $${MIN_DEAL_PRICE}`;
+    else if (ageHours > MAX_AGE_HOURS)                                     reason = `age ${ageHours.toFixed(1)}h > ${MAX_AGE_HOURS}h`;
+    else if (d.dropPct >= MIN_DROP_PCT && savings >= MIN_SAVINGS_LOW)    { passed.push(d); continue; }
+    else if (d.dropPct >= 15       && savings >= MIN_SAVINGS_HIGH)       { passed.push(d); continue; }
+    else reason = `drop ${d.dropPct}% savings $${savings}`;
+
+    console.log(`[filter] SKIP "${d.title.slice(0, 60)}" — ${reason}`);
+  }
+
+  return passed
     .map(d => ({ ...d, score: scoreDeal(d), category: guessCategory(d.title) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, maxDeals);

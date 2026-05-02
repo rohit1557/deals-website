@@ -130,45 +130,10 @@ const REQUIRED_VARS = [
   "INSTAGRAM_ACCOUNT_ID",
 ];
 
-async function postStory(
-  accountId: string,
-  token: string,
-  imageUrl: string,
-  linkUrl: string,
-): Promise<string> {
-  // Pass params as query string — Meta's documented approach for link_sticker_url
-  const qs = new URLSearchParams({
-    image_url:        imageUrl,
-    media_type:       "STORIES",
-    link_sticker_url: linkUrl,
-    access_token:     token,
-  });
-
-  const createRes = await fetch(`${GRAPH_API}/${accountId}/media?${qs}`, {
-    method: "POST",
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!createRes.ok) throw new Error(`Story container failed: ${createRes.status} ${await createRes.text()}`);
-  const { id: containerId } = await createRes.json() as { id: string };
-
-  await waitForContainer(containerId, token);
-
-  const publishRes = await fetch(`${GRAPH_API}/${accountId}/media_publish`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ creation_id: containerId, access_token: token }),
-    signal:  AbortSignal.timeout(20_000),
-  });
-  if (!publishRes.ok) throw new Error(`Story publish failed: ${publishRes.status} ${await publishRes.text()}`);
-  const data = await publishRes.json() as { id: string };
-  return data.id;
-}
 
 export async function uploadAndPost(
   imagePaths: string[],
   caption: string,
-  storyLinkUrl?: string,
-  storyImagePath?: string,
 ): Promise<void> {
   const missing = REQUIRED_VARS.filter(k => !process.env[k]);
   if (missing.length > 0) {
@@ -191,20 +156,4 @@ export async function uploadAndPost(
     mediaId = await publishCarousel(accountId, token, imageUrls, caption);
   }
   console.log(`[instagram] Feed post published! Media ID: ${mediaId}`);
-
-  // Post a Story with a clickable link sticker for the top deal
-  if (storyLinkUrl) {
-    try {
-      let storyImageUrl = imageUrls[0];
-      if (storyImagePath) {
-        console.log("[instagram] Uploading Story image to Cloudinary…");
-        storyImageUrl = await uploadToCloudinary(storyImagePath);
-      }
-      console.log(`[instagram] Posting Story with link sticker → ${storyLinkUrl}`);
-      const storyId = await postStory(accountId, token, storyImageUrl, storyLinkUrl);
-      console.log(`[instagram] Story published! Media ID: ${storyId}`);
-    } catch (err) {
-      console.warn("[instagram] Story post failed (feed post still succeeded):", err);
-    }
-  }
 }

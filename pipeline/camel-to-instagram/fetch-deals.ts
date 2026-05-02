@@ -1,10 +1,14 @@
 const AFFILIATE_TAG = process.env.AFFILIATE_TAG ?? "dealdrop0d5-22";
 
-// AU-only feed — products tracked here are guaranteed to be on Amazon AU.
-// The global camelcamelcamel.com feed covers US ASINs that don't exist on
-// amazon.com.au, so we never use it.
+// AU-only feeds — products tracked here are guaranteed to be on Amazon AU.
+// Category feeds give 20 items each, broadening pool beyond the 20-item "all" feed.
 const FEEDS = [
   "https://au.camelcamelcamel.com/top_drops/feed",
+  "https://au.camelcamelcamel.com/top_drops/feed?category=electronics",
+  "https://au.camelcamelcamel.com/top_drops/feed?category=computers",
+  "https://au.camelcamelcamel.com/top_drops/feed?category=video_games",
+  "https://au.camelcamelcamel.com/top_drops/feed?category=home_kitchen",
+  "https://au.camelcamelcamel.com/top_drops/feed?category=sports",
 ];
 
 export interface RawDeal {
@@ -116,6 +120,9 @@ export async function fetchDeals(): Promise<RawDeal[]> {
         }
       }
       console.log(`[fetch-deals] ${deals.length} items from ${feed}`);
+  deals.slice(0, 3).forEach(d =>
+    console.log(`[fetch-deals] sample title: "${d.title}" drop=${d.dropPct}% price=$${d.dealPrice} savings=$${d.savingsAbs}`)
+  );
     } catch (err) {
       console.warn(`[fetch-deals] Failed to fetch ${feed}:`, err);
     }

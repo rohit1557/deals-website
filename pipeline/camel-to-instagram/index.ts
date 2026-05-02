@@ -6,7 +6,6 @@ import { enhanceCaptionWithGroq, generateMultiCaption } from "./generate-caption
 import { generateImage } from "./generate-image";
 import { uploadAndPost } from "./post-to-instagram";
 import { filterUnposted, markPosted } from "./posted-deals";
-import { generateStoryImage } from "./generate-story";
 
 // Set POST_TO_INSTAGRAM=true to auto-post after generating images.
 // Carousel if multiple deals; single post if only one.
@@ -76,10 +75,7 @@ async function main() {
     const postCaption = topDeals.length === 1
       ? captionParts[0].replace(/^--- Deal 1 ---\nURL: [^\n]+\n\n/, "")
       : multiCaption;
-    // Generate proper 1080x1920 story image (no cropping)
-    const storyImagePath = path.join(OUTPUT_DIR, "story-1.png");
-    await generateStoryImage(topDeals[0], imagePaths[0], storyImagePath);
-    await uploadAndPost(imagePaths, postCaption, topDeals[0].amazonUrl, storyImagePath);
+    await uploadAndPost(imagePaths, postCaption);
     await markPosted(topDeals.map(d => d.asin));
   } else {
     console.log("\n[pipeline] Done! Files in output/:");
