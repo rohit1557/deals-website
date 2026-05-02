@@ -5,6 +5,7 @@ import { filterDeals } from "./filter-deals";
 import { enhanceCaptionWithGroq, generateMultiCaption } from "./generate-caption";
 import { generateImage } from "./generate-image";
 import { uploadAndPost } from "./post-to-instagram";
+import { filterUnposted, markPosted } from "./posted-deals";
 
 // Set POST_TO_INSTAGRAM=true to auto-post after generating images.
 // Carousel if multiple deals; single post if only one.
@@ -24,7 +25,13 @@ async function main() {
   }
 
   console.log(`[pipeline] Scoring and filtering ${rawDeals.length} deals...`);
-  const topDeals = filterDeals(rawDeals, MAX_DEALS);
+  // Remove ASINs posted in the last 30 days before scoring
+  const freshAsins = await filterUnposted(rawDeals.map(d => d.asin));
+  const freshDeals = rawDeals.filter(d => freshAsins.has(d.asin));
+  if (freshDeals.length === 0) {
+    console.warn("[pipeline] All deals were posted recently — using full list anyway");
+  }
+  const topDeals = filterDeals(freshDeals.length > 0 ? freshDeals : rawDeals, MAX_DEALS);
   if (topDeals.length === 0) {
     console.error("[pipeline] No deals passed filters (drop% < 20% or too old).");
     process.exit(1);
@@ -63,7 +70,13 @@ async function main() {
   // Auto-post to Instagram if configured
   if (AUTO_POST) {
     console.log("\n[pipeline] Posting to Instagram…");
-    await uploadAndPost(imagePaths, multiCaption);
+    // Single deal → use the Groq-enhanced individual caption
+    // Multiple deals → use the multi-deal carousel caption with URLs
+    const postCaption = topDeals.length === 1
+      ? captionParts[0].replace(/^--- Deal 1 ---\nURL: [^\n]+\n\n/, "")
+      : multiCaption;
+    await uploadAndPost(imagePaths, postCaption);
+    await markPosted(topDeals.map(d => d.asin));
   } else {
     console.log("\n[pipeline] Done! Files in output/:");
     topDeals.forEach((_, i) => console.log(`  deal-${i + 1}.png`));

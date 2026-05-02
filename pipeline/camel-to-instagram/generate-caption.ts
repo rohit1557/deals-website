@@ -123,10 +123,11 @@ export function generateMultiCaption(deals: ScoredDeal[]): string {
     ...deals.map((d, i) => {
       const priceStr = d.dealPrice != null ? formatPrice(d.dealPrice) : "";
       const dropStr  = d.dropPct != null ? ` (-${d.dropPct}%)` : "";
-      return `${i + 1}. ${d.title}\n   ${priceStr}${dropStr}`;
+      const shortUrl = d.amazonUrl.replace("https://www.", "");
+      return `${i + 1}. ${d.title}\n   ${priceStr}${dropStr}\n   ${shortUrl}`;
     }),
     "",
-    "Link in bio → dealdrop.au",
+    "👆 Copy the link above or visit dealdrop.au for all deals",
     "",
     HASHTAGS.join(" "),
   ];
