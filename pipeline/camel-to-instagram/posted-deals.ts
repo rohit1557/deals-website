@@ -45,6 +45,29 @@ export async function filterUnposted(asins: string[]): Promise<Set<string>> {
   }
 }
 
+export async function setLatestDealUrl(url: string): Promise<void> {
+  const client = await getClient();
+  if (!client) return;
+
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS instagram_latest_deal (
+        id         INTEGER PRIMARY KEY DEFAULT 1,
+        url        TEXT NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await client.query(`
+      INSERT INTO instagram_latest_deal (id, url, updated_at)
+      VALUES (1, $1, NOW())
+      ON CONFLICT (id) DO UPDATE SET url = $1, updated_at = NOW()
+    `, [url]);
+    console.log(`[posted-deals] Latest deal URL set → ${url}`);
+  } finally {
+    await client.end();
+  }
+}
+
 export async function markPosted(asins: string[]): Promise<void> {
   const client = await getClient();
   if (!client) return;

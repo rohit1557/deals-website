@@ -130,26 +130,9 @@ const REQUIRED_VARS = [
   "INSTAGRAM_ACCOUNT_ID",
 ];
 
-// Updates the profile website link — requires instagram_manage_profile permission.
-// Fails gracefully if the permission isn't granted.
-async function updateProfileLink(accountId: string, token: string, url: string): Promise<void> {
-  const res = await fetch(`${GRAPH_API}/${accountId}`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ website: url, access_token: token }),
-    signal:  AbortSignal.timeout(10_000),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status} ${text}`);
-  }
-  console.log(`[instagram] Bio link updated → ${url}`);
-}
-
 export async function uploadAndPost(
   imagePaths: string[],
   caption: string,
-  bioLinkUrl?: string,
 ): Promise<void> {
   const missing = REQUIRED_VARS.filter(k => !process.env[k]);
   if (missing.length > 0) {
@@ -172,13 +155,4 @@ export async function uploadAndPost(
     mediaId = await publishCarousel(accountId, token, imageUrls, caption);
   }
   console.log(`[instagram] Feed post published! Media ID: ${mediaId}`);
-
-  if (bioLinkUrl) {
-    try {
-      await updateProfileLink(accountId, token, bioLinkUrl);
-    } catch (err) {
-      console.warn(`[instagram] Bio link update failed (post succeeded): ${err}`);
-      console.warn("[instagram] If this keeps failing, add instagram_manage_profile permission in Meta App Dashboard");
-    }
-  }
 }
