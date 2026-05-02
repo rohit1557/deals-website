@@ -80,8 +80,8 @@ async function main() {
     const storyImagePath = path.join(OUTPUT_DIR, "story-1.png");
     await generateStoryImage(topDeals[0], imagePaths[0], storyImagePath);
 
-    // Story link sticker points directly to the top deal
-    const storyLinkUrl = topDeals[0].amazonUrl;
+    // Route through dealdrop.au/out so Meta doesn't flag the affiliate URL
+    const storyLinkUrl = `https://dealdrop.au/out?url=${encodeURIComponent(topDeals[0].amazonUrl)}`;
     await uploadAndPost(imagePaths, postCaption, storyLinkUrl, storyImagePath);
     await markPosted(topDeals.map(d => d.asin));
   } else {
