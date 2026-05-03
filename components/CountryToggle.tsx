@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import clsx from "clsx";
 
 const COUNTRIES = [
@@ -21,12 +21,16 @@ function detectCountry(): "AU" | "IN" {
 export default function CountryToggle() {
   const router     = useRouter();
   const params     = useSearchParams();
+  const pathname   = usePathname();
   const didInit    = useRef(false);
   const activeCode = (params.get("country") ?? "AU") as "AU" | "IN";
 
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
+
+    // Only auto-redirect on the homepage — never on /instagram, /deals/*, etc.
+    if (pathname !== "/") return;
 
     const current = params.get("country");
 
