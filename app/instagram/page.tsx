@@ -104,10 +104,10 @@ export default async function InstagramPage() {
             <span className="text-xl font-black bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
               DealDrop
             </span>
-            <span className="ml-2 text-xs text-white/40 font-medium">@dealdrop.contact</span>
+            <span className="ml-2 text-xs text-white/40 font-medium">@audealdrop</span>
           </div>
           <a
-            href="https://instagram.com/dealdrop.contact"
+            href="https://instagram.com/audealdrop"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs font-bold bg-gradient-to-r from-pink-500 to-orange-400 text-white px-3 py-1.5 rounded-full"
