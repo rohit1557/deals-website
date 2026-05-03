@@ -7,9 +7,11 @@ import { enhanceCaptionWithGroq, generateMultiCaptionWithGroq } from "./generate
 import type { PostType } from "./generate-caption";
 import { generateImage } from "./generate-image";
 import { uploadAndPost } from "./post-to-instagram";
+import { postToBuffer } from "./post-to-buffer";
 import { filterUnposted, markPosted, setLatestDealUrl, recordInstagramPost } from "./posted-deals";
 
-const AUTO_POST  = process.env.POST_TO_INSTAGRAM === "true";
+const AUTO_POST_INSTAGRAM = process.env.POST_TO_INSTAGRAM === "true";
+const AUTO_POST_BUFFER    = process.env.POST_TO_BUFFER    === "true";
 const OUTPUT_DIR = process.env.OUTPUT_DIR ?? "./output";
 
 // POST_TYPE controls the content mix:
@@ -34,6 +36,7 @@ async function main() {
   mkdirSync(OUTPUT_DIR, { recursive: true });
 
   console.log(`[pipeline] Post type: ${POST_TYPE}${CATEGORY_FILTER ? `:${CATEGORY_FILTER}` : ""}`);
+  console.log(`[pipeline] Posting: instagram=${AUTO_POST_INSTAGRAM} buffer=${AUTO_POST_BUFFER}`);
   console.log("[pipeline] Fetching deals from CamelCamelCamel...");
 
   const rawDeals = await fetchDeals();
@@ -86,9 +89,9 @@ async function main() {
     captionParts.push(`--- Deal ${rank} ---\nURL: ${deal.amazonUrl}\n\n${caption}`);
   }
 
-  const captionsFile  = path.join(OUTPUT_DIR, "captions.txt");
-  const multiCaption  = await generateMultiCaptionWithGroq(topDeals, POST_TYPE);
-  const postCaption   = topDeals.length === 1
+  const captionsFile = path.join(OUTPUT_DIR, "captions.txt");
+  const multiCaption = await generateMultiCaptionWithGroq(topDeals, POST_TYPE);
+  const postCaption  = topDeals.length === 1
     ? captionParts[0].replace(/^--- Deal 1 ---\nURL: [^\n]+\n\n/, "")
     : multiCaption;
 
@@ -104,9 +107,19 @@ async function main() {
 
   console.log(`[pipeline] Captions written to ${captionsFile}`);
 
-  if (AUTO_POST) {
-    console.log("\n[pipeline] Posting to Instagram…");
+  const shouldRecord = AUTO_POST_INSTAGRAM || AUTO_POST_BUFFER;
+
+  if (AUTO_POST_INSTAGRAM) {
+    console.log("\n[pipeline] Posting directly to Instagram…");
     await uploadAndPost(imagePaths, postCaption);
+  }
+
+  if (AUTO_POST_BUFFER) {
+    console.log("\n[pipeline] Queuing in Buffer…");
+    await postToBuffer(imagePaths, postCaption);
+  }
+
+  if (shouldRecord) {
     await markPosted(topDeals.map(d => d.asin));
     await recordInstagramPost(topDeals);
     const latestUrl = POST_TYPE === "top5" ? "https://dealdrop.au/instagram" : topDeals[0].amazonUrl;
@@ -115,7 +128,7 @@ async function main() {
     console.log("\n[pipeline] Done! Files in output/:");
     topDeals.forEach((_, i) => console.log(`  deal-${i + 1}.png`));
     console.log("  captions.txt");
-    console.log("\nSet POST_TO_INSTAGRAM=true + POST_TYPE=top5|budget|category:Tech to customise.");
+    console.log("\nSet POST_TO_BUFFER=true to queue via Buffer, or POST_TO_INSTAGRAM=true for direct posting.");
   }
 }
 
