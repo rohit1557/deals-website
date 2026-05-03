@@ -18,6 +18,7 @@ export type Deal = {
   updatedAt: Date;
   votes?: number;
   commentsCount?: number;
+  slug?: string | null;
 };
 
 export type Category =

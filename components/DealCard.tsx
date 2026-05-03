@@ -1,5 +1,4 @@
 "use client";
-import type { MouseEvent } from "react";
 import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
@@ -193,17 +192,12 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
     : isHot                  ? "Grab This Deal →"
     : "View Deal →";
 
-  function handleClick(e: MouseEvent<HTMLAnchorElement>) {
-    if (expired) e.preventDefault();
-  }
+  const dealPageUrl = `/deals/${deal.slug ?? deal.id}`;
 
   return (
     <a
-      href={expired ? undefined : `/out?url=${encodeURIComponent(affiliateUrl(deal.url))}&id=${deal.id}`}
-      target="_blank"
-      rel="noopener noreferrer"
+      href={expired ? undefined : dealPageUrl}
       aria-disabled={expired ? "true" : undefined}
-      onClick={handleClick}
       className={`group flex flex-col rounded-2xl border bg-white overflow-hidden transition-all duration-200 ${
         expired
           ? "opacity-50 cursor-not-allowed border-gray-100 shadow-sm"

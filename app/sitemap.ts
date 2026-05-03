@@ -17,13 +17,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const deals = await db.deal.findMany({
     where:   { isActive: true },
-    select:  { id: true, updatedAt: true, country: true },
+    select:  { id: true, slug: true, updatedAt: true, country: true },
     orderBy: { updatedAt: "desc" },
     take:    2000,
   });
 
   const dealPages: MetadataRoute.Sitemap = deals.map((d) => ({
-    url:             `${baseUrl}/deals/${d.id}`,
+    url:             `${baseUrl}/deals/${d.slug ?? d.id}`,
     lastModified:    d.updatedAt,
     changeFrequency: "daily" as const,
     priority:        d.country === "AU" ? 0.8 : 0.7,
