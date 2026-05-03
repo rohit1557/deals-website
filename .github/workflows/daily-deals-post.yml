@@ -27,7 +27,7 @@ jobs:
         run: npx puppeteer browsers install chrome
       - name: Generate deal images and captions
         env:
-          POST_TO_INSTAGRAM: "true"
+          POST_TO_INSTAGRAM: "false"
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
