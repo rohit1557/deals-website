@@ -44,4 +44,4 @@ jobs:
           name: instagram-deals-${{ github.run_number }}
           path: pipeline/camel-to-instagram/output/
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
