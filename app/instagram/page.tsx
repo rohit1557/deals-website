@@ -6,31 +6,74 @@ export const metadata: Metadata = {
   description: "All deals featured on our Instagram, updated daily. Best Amazon AU price drops.",
 };
 
-export const revalidate = 0; // always fresh — no static caching
+export const revalidate = 0;
 
-interface InstagramPost {
-  id: string;
+const AFFILIATE_TAG = "dealdrop0d5-22";
+
+interface RawRow {
   asin: string;
-  title: string;
-  url: string;
-  deal_price: number | null;
-  savings: number | null;
+  title: string | null;
+  url: string | null;
+  deal_price: string | null;
+  savings: string | null;
   drop_pct: number | null;
-  posted_at: string;
+  posted_at: Date;
 }
 
-async function getPosts(): Promise<InstagramPost[]> {
+interface PostRow {
+  asin: string;
+  title: string | null;
+  url: string;
+  dealPrice: number | null;
+  savings: number | null;
+  dropPct: number | null;
+  postedAt: Date;
+}
+
+async function getPosts(): Promise<PostRow[]> {
+  let rows: RawRow[] = [];
+
   try {
-    const rows = await db.$queryRaw<InstagramPost[]>`
-      SELECT id, asin, title, url, deal_price, savings, drop_pct, posted_at
-      FROM instagram_posts
-      ORDER BY posted_at DESC
+    // Join instagram_posted (every ASIN ever posted) with instagram_posts (rich data added later)
+    rows = await db.$queryRaw<RawRow[]>`
+      SELECT
+        ip.asin,
+        p.title,
+        p.url,
+        p.deal_price::text  AS deal_price,
+        p.savings::text     AS savings,
+        p.drop_pct,
+        ip.posted_at
+      FROM instagram_posted ip
+      LEFT JOIN instagram_posts p ON p.asin = ip.asin
+      ORDER BY ip.posted_at DESC
       LIMIT 50
     `;
-    return rows;
   } catch {
-    return [];
+    // instagram_posts table doesn't exist yet — fall back to asin-only
+    try {
+      rows = await db.$queryRaw<RawRow[]>`
+        SELECT asin, NULL::text AS title, NULL::text AS url,
+               NULL::text AS deal_price, NULL::text AS savings,
+               NULL::int  AS drop_pct, posted_at
+        FROM instagram_posted
+        ORDER BY posted_at DESC
+        LIMIT 50
+      `;
+    } catch {
+      return [];
+    }
   }
+
+  return rows.map((r) => ({
+    asin:      r.asin,
+    title:     r.title ?? null,
+    url:       r.url ?? `https://www.amazon.com.au/dp/${r.asin}?tag=${AFFILIATE_TAG}`,
+    dealPrice: r.deal_price != null ? parseFloat(r.deal_price) : null,
+    savings:   r.savings    != null ? parseFloat(r.savings)    : null,
+    dropPct:   r.drop_pct   ?? null,
+    postedAt:  new Date(r.posted_at),
+  }));
 }
 
 function formatAUD(price: number) {
@@ -40,8 +83,8 @@ function formatAUD(price: number) {
   }).format(price);
 }
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
+function timeAgo(date: Date) {
+  const diff = Date.now() - date.getTime();
   const h = Math.floor(diff / 3_600_000);
   const d = Math.floor(h / 24);
   if (d > 0) return `${d}d ago`;
@@ -75,9 +118,8 @@ export default async function InstagramPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-3">
-        {/* Sub-heading */}
         <p className="text-center text-sm text-white/40 pb-2">
-          🛒 All deals from our posts — tap to shop
+          🛒 Every deal we&apos;ve posted — tap to shop on Amazon AU
         </p>
 
         {posts.length === 0 ? (
@@ -87,44 +129,52 @@ export default async function InstagramPage() {
         ) : (
           posts.map((post) => (
             <a
-              key={post.id}
+              key={post.asin + post.postedAt.toISOString()}
               href={post.url}
               target="_blank"
               rel="noopener noreferrer sponsored"
               className="block group"
             >
-              <div className="bg-white/5 hover:bg-white/10 border border-white/8 hover:border-indigo-500/50 rounded-2xl p-4 transition-all duration-200">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/[0.08] hover:border-indigo-500/50 rounded-2xl p-4 transition-all duration-200">
                 <div className="flex items-start gap-3">
-                  {/* Amazon thumbnail */}
+                  {/* Amazon product thumbnail */}
                   <div className="w-14 h-14 rounded-xl bg-white flex-shrink-0 overflow-hidden flex items-center justify-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`https://m.media-amazon.com/images/P/${post.asin}.01._SX100_.jpg`}
                       alt=""
                       className="w-full h-full object-contain p-1"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                     />
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white/90 leading-snug line-clamp-2">
-                      {post.title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      {post.deal_price != null && (
-                        <span className="text-green-400 font-bold text-sm">
-                          {formatAUD(Number(post.deal_price))}
-                        </span>
-                      )}
-                      {post.savings != null && Number(post.savings) > 0 && (
-                        <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">
-                          SAVE {formatAUD(Number(post.savings))}
-                        </span>
-                      )}
-                      <span className="text-white/25 text-xs ml-auto">
-                        {timeAgo(post.posted_at)}
-                      </span>
-                    </div>
+                    {post.title ? (
+                      <>
+                        <p className="text-sm font-semibold text-white/90 leading-snug line-clamp-2">
+                          {post.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {post.dealPrice != null && (
+                            <span className="text-green-400 font-bold text-sm">
+                              {formatAUD(post.dealPrice)}
+                            </span>
+                          )}
+                          {post.savings != null && post.savings > 0 && (
+                            <span className="bg-red-500/20 text-red-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                              SAVE {formatAUD(post.savings)}
+                            </span>
+                          )}
+                          <span className="text-white/25 text-xs ml-auto">
+                            {timeAgo(post.postedAt)}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-white/50 italic">View deal on Amazon AU</p>
+                        <span className="text-white/25 text-xs">{timeAgo(post.postedAt)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
