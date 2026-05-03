@@ -45,6 +45,43 @@ export async function filterUnposted(asins: string[]): Promise<Set<string>> {
   }
 }
 
+export async function recordInstagramPost(deals: Array<{
+  asin: string;
+  title: string;
+  amazonUrl: string;
+  dealPrice: number | null;
+  savingsAbs: number | null;
+  dropPct: number | null;
+}>): Promise<void> {
+  const client = await getClient();
+  if (!client) return;
+
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS instagram_posts (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        asin       TEXT NOT NULL,
+        title      TEXT NOT NULL,
+        url        TEXT NOT NULL,
+        deal_price NUMERIC,
+        savings    NUMERIC,
+        drop_pct   INT,
+        posted_at  TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    for (const deal of deals) {
+      await client.query(
+        `INSERT INTO instagram_posts (asin, title, url, deal_price, savings, drop_pct)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [deal.asin, deal.title, deal.amazonUrl, deal.dealPrice, deal.savingsAbs, deal.dropPct],
+      );
+    }
+    console.log(`[posted-deals] Recorded ${deals.length} deal(s) in instagram_posts`);
+  } finally {
+    await client.end();
+  }
+}
+
 export async function setLatestDealUrl(url: string): Promise<void> {
   const client = await getClient();
   if (!client) return;

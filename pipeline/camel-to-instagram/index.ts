@@ -7,7 +7,7 @@ import { enhanceCaptionWithGroq, generateMultiCaptionWithGroq } from "./generate
 import type { PostType } from "./generate-caption";
 import { generateImage } from "./generate-image";
 import { uploadAndPost } from "./post-to-instagram";
-import { filterUnposted, markPosted, setLatestDealUrl } from "./posted-deals";
+import { filterUnposted, markPosted, setLatestDealUrl, recordInstagramPost } from "./posted-deals";
 
 const AUTO_POST  = process.env.POST_TO_INSTAGRAM === "true";
 const OUTPUT_DIR = process.env.OUTPUT_DIR ?? "./output";
@@ -108,8 +108,8 @@ async function main() {
     console.log("\n[pipeline] Posting to Instagram…");
     await uploadAndPost(imagePaths, postCaption);
     await markPosted(topDeals.map(d => d.asin));
-    // Update dealdrop.au/latest redirect so "link in bio" always goes to current deal
-    const latestUrl = POST_TYPE === "top5" ? "https://dealdrop.au" : topDeals[0].amazonUrl;
+    await recordInstagramPost(topDeals);
+    const latestUrl = POST_TYPE === "top5" ? "https://dealdrop.au/instagram" : topDeals[0].amazonUrl;
     await setLatestDealUrl(latestUrl);
   } else {
     console.log("\n[pipeline] Done! Files in output/:");
