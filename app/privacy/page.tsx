@@ -76,13 +76,6 @@ export default function PrivacyPage() {
         email we send.
       </p>
       <p>
-        <strong>Singapore (PDPA 2012):</strong> If you access DealDrop from Singapore,
-        you have the right to access and correct personal data we hold about you, and to
-        withdraw consent for its use. Email subscribers may unsubscribe at any time. We
-        collect only the minimum data necessary and do not transfer it outside of our
-        service providers (Vercel, Loops) without your consent.
-      </p>
-      <p>
         To exercise any of these rights, please contact us at{" "}
         <a href="mailto:privacy@dealdrop.com.au">privacy@dealdrop.com.au</a> or via the{" "}
         <a href="/contact">Contact page</a>.
