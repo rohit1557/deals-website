@@ -13,15 +13,24 @@ export default function PrivacyPage() {
       <h2>Who we are</h2>
       <p>
         DealDrop is an Australian deals aggregation website operated by Rohit Ramesh Naik
-        (an individual). It collects and displays promotional deals sourced from public
-        feeds including OzBargain and Reddit r/AusDeals. We do not sell products directly.
+        (ABN: [ABN HERE]) (an individual). It collects and displays promotional deals
+        sourced from public feeds including OzBargain and Reddit r/AusDeals. We do not
+        sell products directly. Contact:{" "}
+        <a href="/contact">via our contact page</a>.
       </p>
 
       <h2>What data we collect</h2>
       <p>
-        DealDrop does <strong>not</strong> require you to create an account or provide
-        any personal information to use the site. We do not collect names, email
-        addresses, or payment information.
+        DealDrop does <strong>not</strong> require you to create an account to browse
+        deals. If you subscribe to deal alerts via our email subscription form, we collect
+        your <strong>email address</strong> using{" "}
+        <a href="https://loops.so" target="_blank" rel="noopener noreferrer">Loops</a>,
+        our email marketing provider. Your email is used solely to send you deal
+        notifications and is never sold or shared with third parties beyond Loops. You can
+        unsubscribe at any time using the link in any email we send.
+      </p>
+      <p>
+        We do not collect names or payment information.
       </p>
       <p>
         Our hosting provider (Vercel) may collect standard server logs including IP
