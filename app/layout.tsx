@@ -120,7 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </svg>
                   @audealdrop
                 </a>
-                <p>Amazon Associate — qualifying purchases earn a commission.</p>
+                <p>As an Amazon Associate I earn from qualifying purchases.</p>
               </div>
             </div>
           </div>
