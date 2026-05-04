@@ -10,9 +10,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DealDrop — Best Deals in Australia & India",
+  title: "DealDrop — Great Deals in Australia & India",
   description:
-    "Real promo deals from Amazon AU, OzBargain, Flipkart and more. Verified prices, updated every hour. Free, no signup needed.",
+    "Real promo deals from Amazon AU, OzBargain, Flipkart and more. Updated every hour. Free, no signup needed.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -120,7 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </svg>
                   @audealdrop
                 </a>
-                <p>Amazon Associate — qualifying purchases earn a commission.</p>
+                <p>As an Amazon Associate I earn from qualifying purchases.</p>
               </div>
             </div>
           </div>
