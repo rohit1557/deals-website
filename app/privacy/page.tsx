@@ -64,12 +64,28 @@ export default function PrivacyPage() {
       </p>
 
       <h2>Your rights</h2>
-      <p><strong>Australia (Privacy Act 1988):</strong> You have the right to access and correct personal information we hold about you.</p>
-      <p><strong>India (DPDP Act 2023):</strong> You have the right to access, correct, and erase personal data we hold. As we do not actively collect personal data beyond server logs, there is typically nothing to action.</p>
-      <p>In all cases, as we do not collect personal information beyond server logs, there is typically nothing to access or correct.</p>
       <p>
-        If you have a privacy concern, please use the contact details provided when you
-        were directed to this site.
+        <strong>Australia (Privacy Act 1988):</strong> You have the right to access and
+        correct personal information we hold about you. Email subscribers may request
+        deletion of their email address at any time.
+      </p>
+      <p>
+        <strong>India (DPDP Act 2023):</strong> You have the right to access, correct,
+        and erase personal data we hold. If you have subscribed to deal alerts, you may
+        request erasure of your email address by contacting us or unsubscribing via any
+        email we send.
+      </p>
+      <p>
+        <strong>Singapore (PDPA 2012):</strong> If you access DealDrop from Singapore,
+        you have the right to access and correct personal data we hold about you, and to
+        withdraw consent for its use. Email subscribers may unsubscribe at any time. We
+        collect only the minimum data necessary and do not transfer it outside of our
+        service providers (Vercel, Loops) without your consent.
+      </p>
+      <p>
+        To exercise any of these rights, please contact us at{" "}
+        <a href="mailto:privacy@dealdrop.com.au">privacy@dealdrop.com.au</a> or via the{" "}
+        <a href="/contact">Contact page</a>.
       </p>
 
       <h2>Changes to this policy</h2>
