@@ -20,15 +20,28 @@ export default function PrivacyPage() {
 
       <h2>What data we collect</h2>
       <p>
-        DealDrop does <strong>not</strong> require you to create an account or provide
-        any personal information to use the site. We do not collect names, email
-        addresses, or payment information.
+        DealDrop does <strong>not</strong> require you to create an account to browse
+        deals. We do not collect names or payment information.
+      </p>
+      <p>
+        <strong>Email newsletter (optional):</strong> If you choose to subscribe to deal
+        alerts via the email sign-up form on this site, we collect your email address.
+        This data is stored and processed by{" "}
+        <a href="https://loops.so/privacy" target="_blank" rel="noopener noreferrer">
+          Loops
+        </a>{" "}
+        (our email service provider) in accordance with their privacy policy. We use your
+        email address solely to send deal alerts. You can unsubscribe at any time using
+        the link in any email we send. We do not sell or share your email address with
+        third parties.
       </p>
       <p>
         Our hosting provider (Vercel) may collect standard server logs including IP
         addresses and browser information as part of normal web server operation. This
-        data is used solely for security and performance purposes and is governed by
-        <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer"> Vercel&apos;s Privacy Policy</a>.
+        data is used solely for security and performance purposes and is governed by{" "}
+        <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Vercel&apos;s Privacy Policy
+        </a>.
       </p>
 
       <h2>Cookies</h2>
