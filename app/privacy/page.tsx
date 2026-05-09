@@ -64,7 +64,7 @@ export default function PrivacyPage() {
       <p>
         Some links on this site are affiliate links. When you click an affiliate link and
         make a purchase, we may earn a small commission at no extra cost to you. We are a
-        participant in the Amazon Associates Program. See our full affiliate disclosure below.
+        participant in the Amazon Associates Program and the Commission Factory affiliate network. See our full affiliate disclosure below. When you click an affiliate link, your click may be tracked by the relevant affiliate network (Amazon Associates, Commission Factory) to attribute any resulting commission. This tracking typically uses cookies or redirect parameters and is governed by the respective network&apos;s privacy policy.
       </p>
 
       <h2>Third-party websites</h2>
