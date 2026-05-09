@@ -99,8 +99,9 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        Questions about these terms can be directed to the site operator via the contact
-        details provided when you were directed to this site.
+        Questions about these terms can be directed to Rohit Ramesh Naik (ABN 14 967 852 208)
+        at{" "}<a href="mailto:privacy@dealdrop.com.au">privacy@dealdrop.com.au</a>{" "}
+        or via the <a href="/contact">Contact page</a>.
       </p>
     </div>
   );
