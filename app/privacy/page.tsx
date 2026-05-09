@@ -15,7 +15,8 @@ export default function PrivacyPage() {
         DealDrop is an Australian deals aggregation website operated by Rohit Ramesh Naik
         (an individual), ABN 14 967 852 208. It collects and displays promotional deals
         sourced from public feeds including OzBargain and Reddit r/AusDeals. We do not
-        sell products directly.
+        sell products directly. You can reach us at{" "}
+        <a href="mailto:privacy@dealdrop.com.au">privacy@dealdrop.com.au</a>.
       </p>
 
       <h2>What data we collect</h2>
