@@ -8,7 +8,7 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl prose prose-slate py-8">
       <h1>Privacy Policy</h1>
-      <p className="text-sm text-gray-500">Last updated: April 2026</p>
+      <p className="text-sm text-gray-500">Last updated: January 2026</p>
 
       <h2>Who we are</h2>
       <p>
