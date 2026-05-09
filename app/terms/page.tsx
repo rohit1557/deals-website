@@ -51,8 +51,9 @@ export default function TermsPage() {
       <h2>Affiliate disclosure</h2>
       <p>
         DealDrop participates in affiliate programs including the Amazon Associates
-        Program. When you click certain links on this site and make a qualifying purchase,
-        we may earn a commission at no additional cost to you.
+        Program and the Commission Factory affiliate network. When you click certain links
+        on this site and make a qualifying purchase, we may earn a commission at no
+        additional cost to you.
       </p>
       <p>
         <strong>As an Amazon Associate, DealDrop earns from qualifying purchases.</strong>
