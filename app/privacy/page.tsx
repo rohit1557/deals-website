@@ -44,6 +44,15 @@ export default function PrivacyPage() {
           Vercel&apos;s Privacy Policy
         </a>.
       </p>
+      <p>
+        <strong>Contact form:</strong> If you submit a message via our contact form, your
+        name, email address, and message are transmitted to and stored by{" "}
+        <a href="https://formspree.io/legal/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Formspree
+        </a>{" "}
+        (our form processing provider) in accordance with their privacy policy. We use
+        this data solely to respond to your enquiry.
+      </p>
 
       <h2>Cookies</h2>
       <p>
