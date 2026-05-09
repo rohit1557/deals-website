@@ -1,5 +1,10 @@
 import type { ScoredDeal } from "./filter-deals";
 
+// Required by Amazon Associates Program Operating Agreement §5 and ACCC guidelines.
+// Must appear at the START of every caption containing an Amazon affiliate link,
+// within the first ~125 chars so it's visible before Instagram's "more" truncation.
+const AMAZON_DISCLOSURE = "#ad | As an Amazon Associate I earn from qualifying purchases.\n\n";
+
 const HASHTAGS = [
   "#DealDrop", "#AussieDeals", "#AmazonAustralia", "#AmazonDeals",
   "#PriceDrop", "#ShoppingDeals", "#BargainHunter", "#DealAlert",
@@ -62,7 +67,7 @@ function templateCaption(deal: ScoredDeal): string {
   const catTags    = CATEGORY_TAGS[deal.category] ?? [];
   const shortUrl   = deal.amazonUrl.replace("https://www.", "");
 
-  return [
+  return AMAZON_DISCLOSURE + [
     pick(HOOKS),
     "",
     `${deal.title}`,
@@ -131,7 +136,7 @@ Rules:
     const body = data.choices?.[0]?.message?.content?.trim();
     if (body) {
       console.log(`[generate-caption] Groq caption generated for deal #${rank}`);
-      return [
+      return AMAZON_DISCLOSURE + [
         body,
         "",
         pick(CTAS),
@@ -192,7 +197,7 @@ export async function generateMultiCaptionWithGroq(
     HASHTAGS.join(" "),
   ];
 
-  if (!apiKey) return templateLines.join("\n");
+  if (!apiKey) return AMAZON_DISCLOSURE + templateLines.join("\n");
 
   const prompt = `Write a punchy Instagram carousel caption for an Australian deals page called DealDrop.
 Post type: ${typeLabel[postType]}
@@ -231,7 +236,7 @@ Rules:
     const hook = data.choices?.[0]?.message?.content?.trim();
     if (hook) {
       console.log("[generate-caption] Groq multi-caption generated");
-      return [
+      return AMAZON_DISCLOSURE + [
         hook,
         "",
         ...deals.map((d, i) => {
@@ -252,5 +257,5 @@ Rules:
     // fall through to template
   }
 
-  return templateLines.join("\n");
+  return AMAZON_DISCLOSURE + templateLines.join("\n");
 }
