@@ -67,6 +67,19 @@ export default function PrivacyPage() {
         participant in the Amazon Associates Program and the Commission Factory affiliate network. See our full affiliate disclosure below. When you click an affiliate link, your click may be tracked by the relevant affiliate network (Amazon Associates, Commission Factory) to attribute any resulting commission. This tracking typically uses cookies or redirect parameters and is governed by the respective network&apos;s privacy policy.
       </p>
 
+      <h2>Commission Factory</h2>
+      <p>
+        DealDrop participates in the{" "}
+        <a href="https://www.commissionfactory.com/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Commission Factory
+        </a>{" "}
+        affiliate network. Commission Factory may set cookies to track purchases referred
+        from this site. Their data practices are governed by the{" "}
+        <a href="https://www.commissionfactory.com/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Commission Factory Privacy Policy
+        </a>.
+      </p>
+
       <h2>Third-party websites</h2>
       <p>
         Deal links direct you to third-party retailer websites. We are not responsible for
