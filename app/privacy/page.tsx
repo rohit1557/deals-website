@@ -57,7 +57,7 @@ export default function PrivacyPage() {
       <h2>Cookies</h2>
       <p>
         DealDrop does not set first-party cookies. Third-party services (such as Vercel
-        Analytics, if enabled) may set cookies in accordance with their own privacy policies.
+        Analytics, if enabled) may set cookies in accordance with their own privacy policies. This site also uses Google Analytics (via Google tag) to understand aggregate traffic patterns. Google Analytics collects anonymised usage data including page views and session information. You can opt out via the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>. No personally identifiable information is sent to Google Analytics.
       </p>
 
       <h2>Affiliate links</h2>
