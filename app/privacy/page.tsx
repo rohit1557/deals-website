@@ -8,14 +8,15 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl prose prose-slate py-8">
       <h1>Privacy Policy</h1>
-      <p className="text-sm text-gray-500">Last updated: April 2026</p>
+      <p className="text-sm text-gray-500">Last updated: January 2026</p>
 
       <h2>Who we are</h2>
       <p>
         DealDrop is an Australian deals aggregation website operated by Rohit Ramesh Naik
         (an individual), ABN 14 967 852 208. It collects and displays promotional deals
         sourced from public feeds including OzBargain and Reddit r/AusDeals. We do not
-        sell products directly.
+        sell products directly. You can reach us at{" "}
+        <a href="mailto:privacy@dealdrop.com.au">privacy@dealdrop.com.au</a>.
       </p>
 
       <h2>What data we collect</h2>
@@ -43,18 +44,40 @@ export default function PrivacyPage() {
           Vercel&apos;s Privacy Policy
         </a>.
       </p>
+      <p>
+        <strong>Contact form:</strong> If you submit a message via our contact form, your
+        name, email address, and message are transmitted to and stored by{" "}
+        <a href="https://formspree.io/legal/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Formspree
+        </a>{" "}
+        (our form processing provider) in accordance with their privacy policy. We use
+        this data solely to respond to your enquiry.
+      </p>
 
       <h2>Cookies</h2>
       <p>
         DealDrop does not set first-party cookies. Third-party services (such as Vercel
-        Analytics, if enabled) may set cookies in accordance with their own privacy policies.
+        Analytics, if enabled) may set cookies in accordance with their own privacy policies. This site also uses Google Analytics (via Google tag) to understand aggregate traffic patterns. Google Analytics collects anonymised usage data including page views and session information. You can opt out via the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer">Google Analytics opt-out browser add-on</a>. No personally identifiable information is sent to Google Analytics.
       </p>
 
       <h2>Affiliate links</h2>
       <p>
         Some links on this site are affiliate links. When you click an affiliate link and
         make a purchase, we may earn a small commission at no extra cost to you. We are a
-        participant in the Amazon Associates Program. See our full affiliate disclosure below.
+        participant in the Amazon Associates Program and the Commission Factory affiliate network. See our full affiliate disclosure below. When you click an affiliate link, your click may be tracked by the relevant affiliate network (Amazon Associates, Commission Factory) to attribute any resulting commission. This tracking typically uses cookies or redirect parameters and is governed by the respective network&apos;s privacy policy.
+      </p>
+
+      <h2>Commission Factory</h2>
+      <p>
+        DealDrop participates in the{" "}
+        <a href="https://www.commissionfactory.com/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Commission Factory
+        </a>{" "}
+        affiliate network. Commission Factory may set cookies to track purchases referred
+        from this site. Their data practices are governed by the{" "}
+        <a href="https://www.commissionfactory.com/privacy-policy" target="_blank" rel="noopener noreferrer">
+          Commission Factory Privacy Policy
+        </a>.
       </p>
 
       <h2>Third-party websites</h2>

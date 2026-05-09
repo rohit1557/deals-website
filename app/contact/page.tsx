@@ -34,6 +34,7 @@ export default function ContactPage() {
         <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Get in touch</h1>
         <p className="text-sm text-gray-500 mb-6">
           Found a broken deal, wrong price, or just want to say hi? We&apos;d love to hear from you.
+          Messages are processed by <a href="https://formspree.io/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">Formspree</a>.
         </p>
 
         {status === "success" ? (

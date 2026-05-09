@@ -103,9 +103,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div>
                 <h3 className="font-semibold text-gray-800 mb-3 text-xs uppercase tracking-widest">Disclosure</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  Some links are affiliate links. When you buy through them we may earn a
-                  small commission at no extra cost to you. Prices are accurate at time of
-                  posting and may change.
+                  Some links are affiliate links (Amazon Associates &amp; Commission Factory).
+                  When you buy through them we may earn a small commission at no extra cost
+                  to you. Prices are accurate at time of posting and may change.
                 </p>
               </div>
             </div>
