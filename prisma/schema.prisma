@@ -1,8 +1,6 @@
-// This is your Prisma schema file.
-// Docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -10,29 +8,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---------------------------------------------------------------------------
-// Deals
-// ---------------------------------------------------------------------------
-
 model Deal {
-  id            String    @id @default(uuid()) @db.Uuid
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   title         String
   description   String?
-  url           String
+  url           String    @unique
   imageUrl      String?   @map("image_url")
-  originalPrice Decimal?  @map("original_price") @db.Decimal
-  dealPrice     Decimal?  @map("deal_price")     @db.Decimal
-  currency      String    // required — enforced on frontend via PR #16
+  originalPrice Decimal?  @map("original_price") @db.Decimal(10, 2)
+  dealPrice     Decimal?  @map("deal_price")     @db.Decimal(10, 2)
   discountPct   Int?      @map("discount_pct")
-  // NOTE: category is a plain text column, not a FK relation.
-  // Needs a proper Category model + FK if we want categories.list to be clean.
   category      String?
   source        String?
+  currency      String?   @default("AUD")
+  country       String?   @default("AU")
   expiresAt     DateTime? @map("expires_at")
-  isActive      Boolean?  @map("is_active")
-  createdAt     DateTime? @map("created_at")
-  updatedAt     DateTime? @map("updated_at")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  slug          String?   @unique
+  votes         Int       @default(0)
+  commentsCount Int       @default(0) @map("comments_count")
 
+  @@index([category])
+  @@index([isActive, createdAt(sort: Desc)])
+  @@index([country])
   @@map("deals")
 }
 
