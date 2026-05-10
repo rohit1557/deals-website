@@ -44,6 +44,7 @@ model Deal {
   currency      String    @default("USD")
   discountPct   Int?      @map("discount_pct")
   category      String?
+  country       String?
   source        String?
   expiresAt     DateTime? @map("expires_at") @db.Timestamptz
   isActive      Boolean?  @map("is_active")
