@@ -5,5 +5,5 @@
 --
 -- IF NOT EXISTS guard makes this safe to re-run (idempotent).
 
-ALTER TABLE agent_memory
-  ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE "agent_memory"
+  ADD COLUMN IF NOT EXISTS "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW();
