@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
-import { ExternalLink, ArrowLeft, Tag, Clock } from "lucide-react";
+import { ArrowLeft, Tag, Clock } from "lucide-react";
+import AffiliateButton from "@/components/AffiliateButton";
 
 const BASE_URL = "https://dealdrop.au";
 const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -176,14 +177,15 @@ export default async function DealPage({ params }: Props) {
               )}
             </div>
 
-            <a
+            <AffiliateButton
               href={outUrl}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-colors"
-            >
-              Get this deal <ExternalLink className="h-4 w-4" />
-            </a>
+              dealId={deal.id}
+              dealTitle={deal.title}
+              dealSource={deal.source}
+              dealCategory={deal.category}
+              dealPrice={dealPrice}
+              currency={currency}
+            />
 
             <p className="text-center text-xs text-gray-400">
               Affiliate link · Price may have changed · Always verify on the retailer site
