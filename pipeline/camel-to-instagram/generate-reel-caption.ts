@@ -36,7 +36,10 @@ export function generateReelCaption(deals: WeeklyDeal[]): string {
   if (deals.length === 0) return "";
 
   const topDeal = deals[0];
-  const shortTitle = topDeal.title.length > 50 ? topDeal.title.slice(0, 47) + "..." : topDeal.title;
+  const friendlySource = topDeal.source === 'camelcamelcamel' ? 'Amazon AU' : (topDeal.source ?? 'deal');
+  const shortTitle = topDeal.title.length > 50
+    ? topDeal.title.slice(0, 50).replace(/\s+\S*$/, '') + '...'
+    : topDeal.title;
   const templateChoice = Math.floor(Math.random() * 3);
   const hashtags = pickRandomHashtags(6).join(" ");
   const discountPct = topDeal.discount_pct ?? 0;
@@ -56,7 +59,7 @@ export function generateReelCaption(deals: WeeklyDeal[]): string {
     caption = `💸 Save ${savingsAmount} on ${shortTitle}. One of the best prices we have tracked. Grab it before it is gone 👇${moreDealsCta}\n\n${hashtags}`;
   } else {
     // Template C — Curiosity
-    caption = `This ${topDeal.source} deal caught our eye... ${shortTitle} for ${dealPrice} — that is ${discountPct}% off 🤯 Who is grabbing this?${moreDealsCta}\n\n${hashtags}`;
+    caption = `This ${friendlySource} deal caught our eye... ${shortTitle} for ${dealPrice} — that is ${discountPct}% off 🤯 Who is grabbing this?${moreDealsCta}\n\n${hashtags}`;
   }
 
   return caption;
