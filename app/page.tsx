@@ -217,6 +217,23 @@ export default async function HomePage({ searchParams }: PageProps) {
         </section>
       )}
 
+      {/* ── Search + Sort + Category (sticky on scroll) ── */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Suspense>
+            <SearchBar />
+          </Suspense>
+          <Suspense>
+            <SortSelector current={sort} />
+          </Suspense>
+        </div>
+        <div className="sticky top-0 z-30 bg-white pb-3 border-b border-gray-100">
+          <Suspense>
+            <CategoryFilter />
+          </Suspense>
+        </div>
+      </div>
+
       {/* ── Top Deals Today ── */}
       {!isFiltered && topDeals.length > 0 && (
         <section>
