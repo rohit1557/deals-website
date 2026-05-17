@@ -336,19 +336,6 @@ export default async function HomePage({ searchParams }: PageProps) {
         </section>
       )}
 
-      {/* ── Search + Sort ── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Suspense>
-          <SearchBar />
-        </Suspense>
-        <Suspense>
-          <SortSelector current={sort} />
-        </Suspense>
-      </div>
-      <Suspense>
-        <CategoryFilter />
-      </Suspense>
-
       {/* ── Deal count ── */}
       <div className="flex items-center justify-between">
         <div>
