@@ -158,7 +158,7 @@ async function stitchFramesIntoVideo(
 }
 
 export async function generateReel(): Promise<void> {
-  const outputDir = path.resolve(__dirname, "../../output/reel");
+  const outputDir = path.resolve(__dirname, "output/reel");
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
