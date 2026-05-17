@@ -130,7 +130,7 @@ async function stitchFramesIntoVideo(
     fs.writeFileSync(concatFile, concatContent);
 
     let ffmpegCmd = ffmpeg()
-      .input(`concat:${framePaths.map(path.resolve).join("|")}`)
+      .input(`concat:${framePaths.map((fp) => path.resolve(fp)).join("|")}`)
       .inputOptions(["-loop", "1", "-t", "5"])
       .outputOptions([
         "-c:v",
