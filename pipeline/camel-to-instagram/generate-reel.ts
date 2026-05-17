@@ -148,7 +148,7 @@ async function stitchFramesIntoVideo(
         fs.unlinkSync(concatFile);
         resolve();
       })
-      .on("error", (err) => {
+      .on("error", (err: Error) => {
         fs.unlinkSync(concatFile);
         reject(err);
       });
