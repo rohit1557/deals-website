@@ -128,7 +128,7 @@ function getCategoryEmoji(category: string, title: string): string {
   return catStyle.emoji;
 }
 
-export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
+export default function DealCard({ deal, trending, featured }: { deal: Deal; trending?: boolean; featured?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
