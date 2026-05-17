@@ -1,26 +1,44 @@
 "use client";
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback, useTransition, useEffect, useRef } from "react";
 
 export default function SearchBar() {
   const router = useRouter();
   const params = useSearchParams();
   const [, startTransition] = useTransition();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const q = e.target.value;
-      const next = new URLSearchParams(params.toString());
-      if (q) {
-        next.set("q", q);
-      } else {
-        next.delete("q");
+
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
-      startTransition(() => router.push(`/?${next.toString()}`));
+
+      // Set new debounced timeout
+      timeoutRef.current = setTimeout(() => {
+        const next = new URLSearchParams(params.toString());
+        if (q) {
+          next.set("q", q);
+        } else {
+          next.delete("q");
+        }
+        startTransition(() => router.push(`/?${next.toString()}`));
+      }, 300);
     },
     [params, router]
   );
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="relative max-w-xl w-full">
