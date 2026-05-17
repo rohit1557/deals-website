@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1080px;
+    height: 1920px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background gradient — dark and bold for portrait */
+  #bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* Overlay for text readability */
+  #overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0,0,0,0.3) 0%,
+      rgba(0,0,0,0.65) 50%,
+      rgba(0,0,0,0.8) 100%
+    );
+  }
+
+  /* Main content frame */
+  #frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 80px 60px;
+  }
+
+  /* DealDrop logo top center */
+  .logo {
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(90deg, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+  }
+
+  /* Center content — deal details */
+  .center-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .deal-title {
+    font-size: 56px;
+    font-weight: 800;
+    line-height: 1.2;
+    max-width: 900px;
+    text-shadow: 0 4px 40px rgba(0,0,0,0.7);
+  }
+
+  .price-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .original-price {
+    font-size: 32px;
+    color: rgba(255,255,255,0.5);
+    text-decoration: line-through;
+    font-weight: 600;
+  }
+
+  .deal-price {
+    font-size: 96px;
+    font-weight: 900;
+    letter-spacing: -3px;
+    color: #4ade80;
+    text-shadow: 0 0 60px rgba(74,222,128,0.45);
+    line-height: 1;
+  }
+
+  .discount-badge {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: 48px;
+    font-weight: 900;
+    padding: 16px 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(239,68,68,0.6);
+    letter-spacing: -1px;
+  }
+
+  /* Source label bottom */
+  .source-label {
+    font-size: 20px;
+    color: rgba(255,255,255,0.6);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div id="overlay"></div>
+
+  <div id="frame">
+    <div class="logo">DealDrop</div>
+
+    <div class="center-content">
+      <div class="deal-title" id="deal-title">Loading...</div>
+
+      <div class="price-section">
+        <div class="original-price" id="original-price" style="display:none"></div>
+        <div class="deal-price" id="deal-price">$0</div>
+        <div class="discount-badge" id="discount-badge" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="source-label" id="source-label"></div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const title = decodeURIComponent(params.get("title") || "Great Deal");
+    const originalPrice = params.get("original_price");
+    const dealPrice = params.get("deal_price");
+    const discountPct = params.get("discount_pct");
+    const source = params.get("source") || "Amazon";
+
+    document.getElementById("deal-title").textContent = title;
+    document.getElementById("deal-price").textContent = dealPrice || "$0";
+    document.getElementById("source-label").textContent = source;
+
+    if (originalPrice) {
+      document.getElementById("original-price").textContent = originalPrice;
+      document.getElementById("original-price").style.display = "block";
+    }
+
+    if (discountPct) {
+      document.getElementById("discount-badge").textContent = `${discountPct}% OFF`;
+      document.getElementById("discount-badge").style.display = "block";
+    }
+  </script>
+</body>
+</html>
