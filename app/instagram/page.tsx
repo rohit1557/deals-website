@@ -30,6 +30,17 @@ interface PostRow {
   postedAt: Date;
 }
 
+type ReelDeal = {
+  slug: string | null;
+  title: string;
+  image_url: string | null;
+  original_price: number | null;
+  deal_price: number | null;
+  discount_pct: number | null;
+  url: string;
+  affiliate_url: string;
+};
+
 async function getPosts(): Promise<PostRow[]> {
   let rows: RawRow[] = [];
 
@@ -76,6 +87,21 @@ async function getPosts(): Promise<PostRow[]> {
   }));
 }
 
+async function getLatestReel(): Promise<{ date: string; deals: ReelDeal[] } | null> {
+  try {
+    const rows = await db.$queryRaw<Array<{ date: Date; deals: ReelDeal[] }>>`
+      SELECT date, deals FROM reel_posts ORDER BY date DESC LIMIT 1
+    `;
+    if (!rows.length) return null;
+    return {
+      date: rows[0].date.toISOString().slice(0, 10),
+      deals: rows[0].deals,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function formatAUD(price: number) {
   return new Intl.NumberFormat("en-AU", {
     style: "currency", currency: "AUD",
@@ -93,7 +119,7 @@ function timeAgo(date: Date) {
 }
 
 export default async function InstagramPage() {
-  const posts = await getPosts();
+  const [posts, latestReel] = await Promise.all([getPosts(), getLatestReel()]);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -121,6 +147,56 @@ export default async function InstagramPage() {
         <p className="text-center text-sm text-white/40 pb-2">
           🛒 Every deal we&apos;ve posted — tap to shop on Amazon AU
         </p>
+
+        {latestReel && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base font-bold text-white/90">🔥 From This Week&apos;s Reel</span>
+              <span className="text-xs text-white/30 ml-auto">{latestReel.date}</span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {latestReel.deals.map((deal, i) => (
+                <a
+                  key={i}
+                  href={deal.affiliate_url}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="block group"
+                >
+                  <div className="bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/20 hover:border-indigo-400/40 rounded-2xl overflow-hidden transition-all duration-200">
+                    {deal.image_url && (
+                      <div className="h-36 bg-white/5 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={deal.image_url} alt={deal.title} className="h-32 w-full object-contain p-2" />
+                      </div>
+                    )}
+                    <div className="p-3">
+                      <p className="text-sm font-semibold text-white/90 leading-snug mb-2">{deal.title}</p>
+                      <div className="flex items-center gap-2 mb-2">
+                        {deal.deal_price != null && (
+                          <span className="text-green-400 font-black text-lg">{formatAUD(deal.deal_price)}</span>
+                        )}
+                        {deal.original_price != null && (
+                          <span className="text-white/30 text-xs line-through">{formatAUD(deal.original_price)}</span>
+                        )}
+                        {deal.discount_pct != null && (
+                          <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {Math.round(deal.discount_pct)}% OFF
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-center text-xs font-bold text-indigo-400 group-hover:text-indigo-300 transition-colors py-1">
+                        View Deal →
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+            <div className="border-t border-white/5 mt-6 mb-2" />
+            <p className="text-xs text-white/30 text-center mb-4">All posted deals ↓</p>
+          </div>
+        )}
 
         {posts.length === 0 ? (
           <div className="text-center py-16 text-white/30 text-sm">
