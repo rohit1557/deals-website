@@ -5,6 +5,7 @@ export interface WeeklyDeal {
   original_price: number | null;
   deal_price: number | null;
   url: string;
+  image_url?: string | null;
 }
 
 function formatPrice(price: number | null): string {
