@@ -1,6 +1,7 @@
 export interface WeeklyDeal {
   title: string;
   source: string;
+  slug?: string | null;
   discount_pct: number | null;
   original_price: number | null;
   deal_price: number | null;
