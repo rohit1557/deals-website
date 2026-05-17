@@ -117,6 +117,9 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
 };
 
 export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
   const expiry    = timeUntilExpiry(deal.expiresAt);
   const expired   = expiry === "Expired";
   const fresh     = isNew(deal.createdAt);
