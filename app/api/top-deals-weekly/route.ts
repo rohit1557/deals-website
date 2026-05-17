@@ -22,7 +22,7 @@ const serializeDeal = (deal: any): WeeklyDeal => ({
 
 export async function GET(request: NextRequest) {
   try {
-    const deals = await prisma.$queryRaw<any[]>`
+    const deals = await db.$queryRaw<any[]>`
       SELECT title, source, discount_pct, original_price, deal_price, url
       FROM deals
       WHERE created_at > NOW() - INTERVAL '7 days'
