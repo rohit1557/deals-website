@@ -21,7 +21,11 @@ function formatAUD(price: number): string {
 }
 
 function truncateTitle(title: string): string {
-  return title.trim().split(/\s+/).slice(0, 5).join(" ");
+  const t = title.replace(/\.{2,}$/, "").trim();
+  if (t.length <= 40) return t;
+  const cut = t.slice(0, 40);
+  const lastSpace = cut.lastIndexOf(" ");
+  return lastSpace > 10 ? cut.slice(0, lastSpace) : cut;
 }
 
 async function fetchTopDeals(): Promise<WeeklyDeal[]> {
@@ -41,7 +45,7 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
   await client.connect();
   try {
     const result = await client.query(
-      `SELECT title, source, discount_pct,
+      `SELECT title, source, slug, discount_pct,
               CAST(original_price AS float) AS original_price,
               CAST(deal_price AS float) AS deal_price,
               url, image_url
@@ -198,6 +202,44 @@ async function stitchFramesIntoVideo(
   });
 }
 
+async function saveReelPost(deals: WeeklyDeal[]): Promise<void> {
+  if (!DATABASE_URL) return;
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: DATABASE_URL });
+  await client.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS reel_posts (
+        date DATE PRIMARY KEY,
+        deals JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    const today = new Date().toISOString().slice(0, 10);
+    const payload = deals.map((d) => ({
+      slug: d.slug ?? null,
+      title: truncateTitle(d.title),
+      image_url: d.image_url ?? null,
+      original_price: d.original_price,
+      deal_price: d.deal_price,
+      discount_pct: d.discount_pct,
+      url: d.url,
+      affiliate_url: d.url.includes("?")
+        ? d.url + "&utm_source=instagram&utm_medium=reel&utm_campaign=daily_reel"
+        : d.url + "?utm_source=instagram&utm_medium=reel&utm_campaign=daily_reel",
+    }));
+    await client.query(
+      `INSERT INTO reel_posts (date, deals)
+       VALUES ($1, $2)
+       ON CONFLICT (date) DO UPDATE SET deals = EXCLUDED.deals, created_at = NOW()`,
+      [today, JSON.stringify(payload)]
+    );
+    console.log(`[generate-reel] Saved reel post for ${today}`);
+  } finally {
+    await client.end();
+  }
+}
+
 export async function generateReel(): Promise<void> {
   const outputDir = path.resolve(__dirname, "output/reel");
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
@@ -222,6 +264,8 @@ export async function generateReel(): Promise<void> {
 
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
+
+  await saveReelPost(deals);
 
   console.log("[generate-reel] Done");
 }
