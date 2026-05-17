@@ -327,7 +327,7 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
               {formatPrice(deal.dealPrice, deal.currency, deal.country)}
             </span>
           )}
-          {hasBadPriceData && (
+          {hasBadPriceData && !featured && (
             <span className="text-sm text-gray-400 italic">Check price on retailer site</span>
           )}
           {!isPromo && !hasInflatedRrp && deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
