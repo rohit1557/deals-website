@@ -34,34 +34,18 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
     throw new Error("DATABASE_URL not set and API unavailable");
   }
 
-  // Mock fallback — in production would use actual DB client
-  console.log(`[generate-reel] Using mock fallback deals`);
-  return [
-    {
-      title: "Samsung 65\" 4K Smart TV",
-      source: "Amazon",
-      discount_pct: 35,
-      original_price: 1299,
-      deal_price: 849,
-      url: "https://amazon.com.au/dp/example1",
-    },
-    {
-      title: "Apple AirPods Pro",
-      source: "Amazon",
-      discount_pct: 25,
-      original_price: 399,
-      deal_price: 299,
-      url: "https://amazon.com.au/dp/example2",
-    },
-    {
-      title: "Sony WH-1000XM5 Headphones",
-      source: "Amazon",
-      discount_pct: 20,
-      original_price: 599,
-      deal_price: 479,
-      url: "https://amazon.com.au/dp/example3",
-    },
-  ];
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: DATABASE_URL });
+  await client.connect();
+  try {
+    const result = await client.query(
+      "SELECT title, source, discount_pct, original_price, deal_price, url FROM deals ORDER BY discount_pct DESC LIMIT 3"
+    );
+    console.log(`[generate-reel] Fetched ${result.rows.length} deals from Neon DB`);
+    return result.rows;
+  } finally {
+    await client.end();
+  }
 }
 
 async function generateReelFrame(
