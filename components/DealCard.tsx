@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
