@@ -1,0 +1,40 @@
+name: Weekly Reels Post
+on:
+  schedule:
+    - cron: "0 9 * * 0"
+  workflow_dispatch:
+
+jobs:
+  generate-reel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        working-directory: pipeline/camel-to-instagram
+        run: npm install
+
+      - name: Install Puppeteer browser
+        working-directory: pipeline/camel-to-instagram
+        run: npx puppeteer browsers install chrome
+
+      - name: Generate reel
+        working-directory: pipeline/camel-to-instagram
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx ts-node generate-reel.ts
+
+      - name: Upload reel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-reel-${{ github.run_number }}
+          path: pipeline/camel-to-instagram/output/reel/
+          retention-days: 7
