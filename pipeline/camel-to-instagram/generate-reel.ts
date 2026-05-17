@@ -39,7 +39,7 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
   await client.connect();
   try {
     const result = await client.query(
-      "SELECT title, source, discount_pct, original_price, deal_price, url FROM deals ORDER BY discount_pct DESC LIMIT 3"
+      "SELECT title, source, discount_pct, CAST(original_price AS float) AS original_price, CAST(deal_price AS float) AS deal_price, url FROM deals ORDER BY discount_pct DESC LIMIT 3"
     );
     console.log(`[generate-reel] Fetched ${result.rows.length} deals from Neon DB`);
     return result.rows;
