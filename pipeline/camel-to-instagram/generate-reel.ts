@@ -265,6 +265,8 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
+  await saveReelPost(deals);
+
   console.log("[generate-reel] Done");
 }
 
