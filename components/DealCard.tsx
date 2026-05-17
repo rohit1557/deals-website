@@ -226,12 +226,15 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
               className={`h-full w-full object-contain p-4 group-hover:scale-105 transition-all duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => {
-                // Fallback 1: Try OG tag from deal metadata
+                // Fallback 1: Try og:image from deal metadata (from scraper OG tag extraction)
                 const ogImage = deal.ogImage;
                 if (ogImage && e.currentTarget.src !== ogImage) {
                   e.currentTarget.src = ogImage;
                 } else {
                   // Fallback 2: All fallbacks exhausted, show emoji placeholder
+                  // Note: We only have deal.ogImage from backend scraper.
+                  // Additional meta tag fallbacks (twitter:image, itemprop=image)
+                  // would require server-side scraping at fetch time.
                   setImageFailed(true);
                 }
               }}
