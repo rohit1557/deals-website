@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1080px; height: 1920px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #fff; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #bg { position: absolute; inset: 0; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+  #overlay { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(129,140,248,0.18) 0%, transparent 70%); }
+  .content { position: relative; display: flex; flex-direction: column; align-items: center; gap: 48px; text-align: center; }
+  .logo { font-size: 56px; font-weight: 900; letter-spacing: -1px; background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .emoji { font-size: 140px; -webkit-text-fill-color: initial; }
+  .hook-text { font-size: 100px; font-weight: 900; line-height: 1.1; letter-spacing: -2px; text-shadow: 0 4px 40px rgba(0,0,0,0.6); max-width: 900px; }
+</style>
+</head>
+<body>
+  <div id="bg"></div>
+  <div id="overlay"></div>
+  <div class="content">
+    <div class="logo">DealDrop</div>
+    <div class="emoji">🔥</div>
+    <div class="hook-text">Top 3 Deals Today</div>
+  </div>
+</body>
+</html>
