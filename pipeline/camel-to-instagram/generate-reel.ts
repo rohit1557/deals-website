@@ -46,7 +46,7 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
               CAST(deal_price AS float) AS deal_price,
               url, image_url
        FROM deals
-       WHERE created_at > NOW() - INTERVAL 7 days
+       WHERE created_at > NOW() - INTERVAL '7 days'
          AND source = $1
          AND is_active = true
          AND discount_pct BETWEEN 5 AND 95
