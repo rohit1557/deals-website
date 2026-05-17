@@ -321,7 +321,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
       {/* Body */}
       <div className="flex flex-col gap-2 p-3 sm:p-4 flex-1">
         <span className={`self-start text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${style.badge}`}>
-          {style.emoji} {cat}
+          {getCategoryEmoji(cat, deal.title)} {cat}
         </span>
 
         <p className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-indigo-700 transition-colors">
