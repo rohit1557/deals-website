@@ -186,6 +186,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
   const sourceLabel = SOURCE_LABELS[(deal.source ?? "").toLowerCase()] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
   const isStale = hoursAgo > 12;
+  const isOldDeal = hoursAgo > 168; // >7 days (168 hours)
 
   const ctaLabel = expired   ? "Expired"
     : isEnding               ? "Buy Now →"
