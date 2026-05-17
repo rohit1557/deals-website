@@ -202,6 +202,44 @@ async function stitchFramesIntoVideo(
   });
 }
 
+async function saveReelPost(deals: WeeklyDeal[]): Promise<void> {
+  if (!DATABASE_URL) return;
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString: DATABASE_URL });
+  await client.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS reel_posts (
+        date DATE PRIMARY KEY,
+        deals JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    const today = new Date().toISOString().slice(0, 10);
+    const payload = deals.map((d) => ({
+      slug: d.slug ?? null,
+      title: truncateTitle(d.title),
+      image_url: d.image_url ?? null,
+      original_price: d.original_price,
+      deal_price: d.deal_price,
+      discount_pct: d.discount_pct,
+      url: d.url,
+      affiliate_url: d.url.includes("?")
+        ? d.url + "&utm_source=instagram&utm_medium=reel&utm_campaign=daily_reel"
+        : d.url + "?utm_source=instagram&utm_medium=reel&utm_campaign=daily_reel",
+    }));
+    await client.query(
+      `INSERT INTO reel_posts (date, deals)
+       VALUES ($1, $2)
+       ON CONFLICT (date) DO UPDATE SET deals = EXCLUDED.deals, created_at = NOW()`,
+      [today, JSON.stringify(payload)]
+    );
+    console.log(`[generate-reel] Saved reel post for ${today}`);
+  } finally {
+    await client.end();
+  }
+}
+
 export async function generateReel(): Promise<void> {
   const outputDir = path.resolve(__dirname, "output/reel");
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
