@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/db';
 import { Decimal } from '@prisma/client/runtime/library';
 
 interface WeeklyDeal {
