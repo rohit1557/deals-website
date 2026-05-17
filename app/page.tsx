@@ -244,7 +244,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {topDeals.map((deal, i) => (
-              <DealCard key={deal.id} deal={deal} trending={i < 3} />
+              <DealCard key={deal.id} deal={deal} trending={i < 3} featured />
             ))}
           </div>
         </section>
