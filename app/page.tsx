@@ -357,16 +357,10 @@ export default async function HomePage({ searchParams }: PageProps) {
       </div>
 
       {/* ── Deal grid ── */}
-      {deals.length === 0 ? (
+      {deals.length === 0 && isFiltered ? (
         <div className="text-center py-24 text-gray-400">
           <p className="text-5xl mb-4">🔍</p>
-          <p className="font-semibold text-gray-600 text-lg">
-            {searchParams.q
-              ? `No deals found for "${searchParams.q}"`
-              : searchParams.category
-                ? `No ${searchParams.category} deals right now`
-                : "No deals found"}
-          </p>
+          <p className="font-semibold text-gray-600 text-lg">No deals found</p>
           <p className="text-sm mt-2 text-gray-400">
             {searchParams.q
               ? "Try a broader search term, or browse all deals below."
