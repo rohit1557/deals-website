@@ -7,39 +7,56 @@ export interface WeeklyDeal {
   url: string;
 }
 
-function formatAUD(price: number): string {
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(price);
+function formatPrice(price: number | null): string {
+  if (price == null) return "";
+  const rounded = Math.round(price * 100) / 100;
+  if (rounded === Math.floor(rounded)) {
+    return `$${Math.floor(rounded)}`;
+  }
+  return `$${rounded.toFixed(2)}`;
+}
+
+function savings(deal: WeeklyDeal): number {
+  if (deal.original_price == null || deal.deal_price == null) return 0;
+  return deal.original_price - deal.deal_price;
+}
+
+function pickRandomHashtags(count: number = 6): string[] {
+  const HASHTAG_POOL = [
+    "#dealsaustralia", "#australiadeals", "#bargainhunter", "#savemoney",
+    "#ozbargain", "#deals", "#cheapdeals", "#pricewatch",
+    "#dealdrop", "#shoppingaustralia", "#frugalliving", "#moneysaver",
+    "#discounts", "#salesaustralia", "#budgetshopping", "#dealalert"
+  ];
+  const shuffled = [...HASHTAG_POOL].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
 }
 
 export function generateReelCaption(deals: WeeklyDeal[]): string {
-  const hook = "You are overpaying for this... 👀";
+  if (deals.length === 0) return "";
 
-  const dealLines = deals
-    .slice(0, 3)
-    .map((deal) => {
-      const savings =
-        deal.original_price != null && deal.deal_price != null
-          ? deal.original_price - deal.deal_price
-          : null;
-      const savingsStr = savings != null ? formatAUD(Math.round(savings)) : "Great Price";
-      return `✅ ${deal.title} — save ${savingsStr}`;
-    });
+  const topDeal = deals[0];
+  const templateChoice = Math.floor(Math.random() * 3);
+  const hashtags = pickRandomHashtags(6).join(" ");
+  const discountPct = topDeal.discount_pct ?? 0;
+  const originalPrice = formatPrice(topDeal.original_price);
+  const dealPrice = formatPrice(topDeal.deal_price);
+  const savingsAmount = formatPrice(savings(topDeal));
+  const dealCount = deals.length;
+  const moreDealsCta = dealCount > 1 ? ` + ${dealCount - 1} more deals` : "";
 
-  const totalSavings = deals.reduce((sum, deal) => {
-    if (deal.original_price != null && deal.deal_price != null) {
-      return sum + (deal.original_price - deal.deal_price);
-    }
-    return sum;
-  }, 0);
+  let caption = "";
 
-  const savingsLine = `Total savings: ${formatAUD(Math.round(totalSavings))} 💰`;
-  const followLine = "Follow @dealdrop.au for daily deals 🔔";
-  const hashtags = "#deals #australia #savemoney #bargains #dealdrop";
+  if (templateChoice === 0) {
+    // Template A — Urgency
+    caption = `⏰ Deal alert! ${topDeal.title} is down ${discountPct}% to ${dealPrice} (was ${originalPrice}). Link in bio 🔥${moreDealsCta}\n\n${hashtags}`;
+  } else if (templateChoice === 1) {
+    // Template B — Value
+    caption = `💸 Save ${savingsAmount} on ${topDeal.title}. One of the best prices we have tracked. Grab it before it is gone 👇${moreDealsCta}\n\n${hashtags}`;
+  } else {
+    // Template C — Curiosity
+    caption = `This ${topDeal.source} deal caught our eye... ${topDeal.title} for ${dealPrice} — that is ${discountPct}% off 🤯 Who is grabbing this?${moreDealsCta}\n\n${hashtags}`;
+  }
 
-  return [hook, ...dealLines, savingsLine, followLine, hashtags].join("\n");
+  return caption;
 }
