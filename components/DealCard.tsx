@@ -190,6 +190,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
   const sourceLabel = SOURCE_LABELS[(deal.source ?? "").toLowerCase()] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
   const isStale = hoursAgo > 12;
+  const isOldDeal = hoursAgo > 168; // >7 days (168 hours)
 
   const ctaLabel = expired   ? "Expired"
     : isEnding               ? "Buy Now →"
@@ -259,7 +260,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           </div>
         )}
 
-        {/* Priority: Hot > Trending > Engagement > All-Time Low > New > Ending Soon */}
+        {/* Priority: Hot > Trending > Engagement > All-Time Low > New > Ending Soon > Old Deal */}
         {isHot && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <Flame className="h-2.5 w-2.5" />
@@ -296,6 +297,11 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <Timer className="h-2.5 w-2.5" />
             ENDING SOON
+          </div>
+        ) : isOldDeal && !expired ? (
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-gray-400 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
+            <Clock className="h-2.5 w-2.5" />
+            OLD DEAL
           </div>
         ) : null}
       </div>
