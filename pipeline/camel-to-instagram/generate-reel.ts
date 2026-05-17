@@ -21,7 +21,11 @@ function formatAUD(price: number): string {
 }
 
 function truncateTitle(title: string): string {
-  return title.trim().split(/\s+/).slice(0, 5).join(" ");
+  const t = title.replace(/\.{2,}$/, "").trim();
+  if (t.length <= 40) return t;
+  const cut = t.slice(0, 40);
+  const lastSpace = cut.lastIndexOf(" ");
+  return lastSpace > 10 ? cut.slice(0, lastSpace) : cut;
 }
 
 async function fetchTopDeals(): Promise<WeeklyDeal[]> {
