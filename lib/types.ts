@@ -4,6 +4,7 @@ export type Deal = {
   description: string | null;
   url: string;
   imageUrl: string | null;
+  ogImage?: string | null;
   originalPrice: number | null;
   dealPrice: number | null;
   discountPct: number | null;
