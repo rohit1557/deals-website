@@ -60,8 +60,6 @@ async function generateReelFrame(
     throw new Error(`Template not found: ${templatePath}`);
   }
 
-  const templateHtml = fs.readFileSync(templatePath, "utf-8");
-
   const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
@@ -70,24 +68,16 @@ async function generateReelFrame(
   try {
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 2 });
-    await page.setContent(templateHtml, { waitUntil: "networkidle0" });
 
-    // Build query params
+    // FIX 1: Pass deal data via URL query params instead of string replacement
     const params = new URLSearchParams({
       title: deal.title,
       original_price: deal.original_price != null ? formatAUD(deal.original_price) : "",
-      deal_price: deal.deal_price != null ? formatAUD(deal.deal_price) : "$0",
+      deal_price: deal.deal_price != null ? formatAUD(deal.deal_price) : "",
       discount_pct: deal.discount_pct != null ? String(deal.discount_pct) : "",
-      source: deal.source,
+      source: deal.source ?? "",
     });
-
-    // Navigate with query params
-    const htmlWithParams = templateHtml.replace(
-      "</head>",
-      `<script>window.dealParams = Object.fromEntries(new URLSearchParams("${params}"));</script></head>`,
-    );
-
-    await page.setContent(htmlWithParams, { waitUntil: "networkidle0" });
+    await page.goto("file://" + templatePath + "?" + params.toString(), { waitUntil: "networkidle0" });
     await page.screenshot({ path: outputPath as `${string}.png`, type: "png" });
     console.log(`[generate-reel] Saved frame ${frameIndex}: ${outputPath}`);
 
@@ -102,42 +92,28 @@ async function stitchFramesIntoVideo(
   outputPath: string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    // Create concat demux file for ffmpeg
-    const concatFile = path.join(path.dirname(outputPath), "concat.txt");
-    const concatContent = framePaths
-      .map((fp) => {
-        const img = path.resolve(fp);
-        return `file '${img}'\nduration 5`;
-      })
-      .join("\n");
+    // FIX 2: Use proper FFmpeg filter chain for looped PNG images
+    const resolved = framePaths.map(fp => path.resolve(fp));
+    const n = resolved.length;
+    const duration = 5;
+    const filterParts = resolved.map((_, i) => `[${i}:v]`).join("");
+    const filterComplex = `${filterParts}concat=n=${n}:v=1:a=0[v]`;
 
-    fs.writeFileSync(concatFile, concatContent);
+    let cmd = ffmpeg();
+    resolved.forEach(fp => {
+      cmd = (cmd as any).input(fp).inputOptions(["-loop", "1", "-t", String(duration)]);
+    });
 
-    let ffmpegCmd = ffmpeg()
-      .input(`concat:${framePaths.map((fp) => path.resolve(fp)).join("|")}`)
-      .inputOptions(["-loop", "1", "-t", "5"])
-      .outputOptions([
-        "-c:v",
-        "libx264",
-        "-preset",
-        "fast",
-        "-pix_fmt",
-        "yuv420p",
-        "-s",
-        "1080x1920",
-      ])
+    cmd
+      .complexFilter(filterComplex, "v")
+      .outputOptions(["-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p", "-s", "1080x1920"])
       .output(outputPath)
       .on("end", () => {
         console.log(`[generate-reel] Video stitched: ${outputPath}`);
-        fs.unlinkSync(concatFile);
         resolve();
       })
-      .on("error", (err: Error) => {
-        fs.unlinkSync(concatFile);
-        reject(err);
-      });
-
-    ffmpegCmd.run();
+      .on("error", (err: Error) => reject(err))
+      .run();
   });
 }
 
