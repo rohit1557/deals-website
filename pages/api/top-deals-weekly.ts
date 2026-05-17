@@ -1,0 +1,47 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import { prisma } from '@/lib/prisma';
+import { Decimal } from '@prisma/client/runtime/library';
+
+interface WeeklyDeal {
+  title: string;
+  source: string | null;
+  discount_pct: number | null;
+  original_price: number | null;
+  deal_price: number | null;
+  url: string;
+}
+
+const serializeDeal = (deal: any): WeeklyDeal => ({
+  title: deal.title,
+  source: deal.source,
+  discount_pct: deal.discount_pct,
+  original_price: deal.original_price instanceof Decimal ? deal.original_price.toNumber() : deal.original_price,
+  deal_price: deal.deal_price instanceof Decimal ? deal.deal_price.toNumber() : deal.deal_price,
+  url: deal.url,
+});
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<WeeklyDeal[] | { error: string }>
+) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const deals = await prisma.$queryRaw<any[]>`
+      SELECT title, source, discount_pct, original_price, deal_price, url
+      FROM deals
+      WHERE created_at > NOW() - INTERVAL '7 days'
+        AND discount_pct IS NOT NULL
+      ORDER BY discount_pct DESC
+      LIMIT 3
+    `;
+
+    const serialized = deals.map(serializeDeal);
+    return res.status(200).json(serialized);
+  } catch (error) {
+    console.error('Failed to fetch weekly top deals:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
