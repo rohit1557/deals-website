@@ -116,6 +116,18 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
   Other:   { bg: "from-gray-50 to-slate-100",     emoji: "🏷️", badge: "bg-gray-100 text-gray-600" },
 };
 
+function getCategoryEmoji(category: string, title: string): string {
+  const catStyle = CATEGORY_STYLE[category] ?? CATEGORY_STYLE["Other"];
+  // For Tech category, detect phones in title and use 📱 instead of 💻
+  if (category === "Tech") {
+    const titleLower = title.toLowerCase();
+    if (/iphone|android|phone|smartphone|pixel|galaxy|oneplus/.test(titleLower)) {
+      return "📱";
+    }
+  }
+  return catStyle.emoji;
+}
+
 export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
