@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 type ReelDeal = {
   slug: string | null;
   title: string;
