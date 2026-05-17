@@ -36,6 +36,7 @@ export function generateReelCaption(deals: WeeklyDeal[]): string {
   if (deals.length === 0) return "";
 
   const topDeal = deals[0];
+  const shortTitle = topDeal.title.length > 50 ? topDeal.title.slice(0, 47) + "..." : topDeal.title;
   const templateChoice = Math.floor(Math.random() * 3);
   const hashtags = pickRandomHashtags(6).join(" ");
   const discountPct = topDeal.discount_pct ?? 0;
@@ -49,13 +50,13 @@ export function generateReelCaption(deals: WeeklyDeal[]): string {
 
   if (templateChoice === 0) {
     // Template A — Urgency
-    caption = `⏰ Deal alert! ${topDeal.title} is down ${discountPct}% to ${dealPrice} (was ${originalPrice}). Link in bio 🔥${moreDealsCta}\n\n${hashtags}`;
+    caption = `⏰ Deal alert! ${shortTitle} is down ${discountPct}% to ${dealPrice} (was ${originalPrice}). Link in bio 🔥${moreDealsCta}\n\n${hashtags}`;
   } else if (templateChoice === 1) {
     // Template B — Value
-    caption = `💸 Save ${savingsAmount} on ${topDeal.title}. One of the best prices we have tracked. Grab it before it is gone 👇${moreDealsCta}\n\n${hashtags}`;
+    caption = `💸 Save ${savingsAmount} on ${shortTitle}. One of the best prices we have tracked. Grab it before it is gone 👇${moreDealsCta}\n\n${hashtags}`;
   } else {
     // Template C — Curiosity
-    caption = `This ${topDeal.source} deal caught our eye... ${topDeal.title} for ${dealPrice} — that is ${discountPct}% off 🤯 Who is grabbing this?${moreDealsCta}\n\n${hashtags}`;
+    caption = `This ${topDeal.source} deal caught our eye... ${shortTitle} for ${dealPrice} — that is ${discountPct}% off 🤯 Who is grabbing this?${moreDealsCta}\n\n${hashtags}`;
   }
 
   return caption;
