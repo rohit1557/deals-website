@@ -82,15 +82,35 @@ async function generateReelFrame(
     const page = await browser.newPage();
     await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 2 });
 
-    // FIX 1: Pass deal data via URL query params instead of string replacement
-    const params = new URLSearchParams({
-      title: deal.title,
-      original_price: deal.original_price != null ? formatAUD(deal.original_price) : "",
-      deal_price: deal.deal_price != null ? formatAUD(deal.deal_price) : "",
-      discount_pct: deal.discount_pct != null ? String(deal.discount_pct) : "",
-      source: deal.source ?? "",
-    });
-    await page.goto("file://" + templatePath + "?" + params.toString(), { waitUntil: "networkidle0" });
+    // file:// URLs don't expose window.location.search in Chromium — inject via evaluate
+    await page.goto("file://" + templatePath, { waitUntil: "networkidle0" });
+    await page.evaluate(
+      (data: { title: string; originalPrice: string; dealPrice: string; discountPct: string; source: string }) => {
+        const titleEl = document.getElementById("deal-title");
+        const priceEl = document.getElementById("deal-price");
+        const origEl = document.getElementById("original-price");
+        const badgeEl = document.getElementById("discount-badge");
+        const sourceEl = document.getElementById("source-label");
+        if (titleEl) titleEl.textContent = data.title;
+        if (priceEl) priceEl.textContent = data.dealPrice;
+        if (sourceEl) sourceEl.textContent = data.source;
+        if (origEl && data.originalPrice) {
+          origEl.textContent = data.originalPrice;
+          (origEl as HTMLElement).style.display = "block";
+        }
+        if (badgeEl && data.discountPct) {
+          badgeEl.textContent = data.discountPct + "% OFF";
+          (badgeEl as HTMLElement).style.display = "block";
+        }
+      },
+      {
+        title: deal.title,
+        originalPrice: deal.original_price != null ? formatAUD(deal.original_price) : "",
+        dealPrice: deal.deal_price != null ? formatAUD(deal.deal_price) : "$0",
+        discountPct: deal.discount_pct != null ? String(Math.round(deal.discount_pct)) : "",
+        source: deal.source === "camelcamelcamel" ? "Amazon AU" : (deal.source ?? "Amazon AU"),
+      }
+    );
     await page.screenshot({ path: outputPath as `${string}.png`, type: "png" });
     console.log(`[generate-reel] Saved frame ${frameIndex}: ${outputPath}`);
 
