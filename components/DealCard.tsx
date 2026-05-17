@@ -116,6 +116,18 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
   Other:   { bg: "from-gray-50 to-slate-100",     emoji: "🏷️", badge: "bg-gray-100 text-gray-600" },
 };
 
+function getCategoryEmoji(category: string, title: string): string {
+  const catStyle = CATEGORY_STYLE[category] ?? CATEGORY_STYLE["Other"];
+  // For Tech category, detect phones in title and use 📱 instead of 💻
+  if (category === "Tech") {
+    const titleLower = title.toLowerCase();
+    if (/iphone|android|phone|smartphone|pixel|galaxy|oneplus/.test(titleLower)) {
+      return "📱";
+    }
+  }
+  return catStyle.emoji;
+}
+
 export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
@@ -241,7 +253,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
         {/* Show emoji when no image URL or image failed to load */}
         {(!deal.imageUrl || imageFailed) && (
           <span className="text-6xl opacity-50 group-hover:scale-110 transition-transform duration-300">
-            {style.emoji}
+            {getCategoryEmoji(cat, deal.title)}
           </span>
         )}
 
@@ -309,7 +321,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
       {/* Body */}
       <div className="flex flex-col gap-2 p-3 sm:p-4 flex-1">
         <span className={`self-start text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${style.badge}`}>
-          {style.emoji} {cat}
+          {getCategoryEmoji(cat, deal.title)} {cat}
         </span>
 
         <p className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug group-hover:text-indigo-700 transition-colors">
