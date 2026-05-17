@@ -40,7 +40,8 @@ async function getDeals(
       ? {
           OR: [
             { title:       { contains: search, mode: "insensitive" as const } },
-            { description: { contains: search, mode: "insensitive" as const } },
+            { category:    { contains: search, mode: "insensitive" as const } },
+            { source:      { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {}),
