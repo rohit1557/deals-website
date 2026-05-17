@@ -253,7 +253,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
         {/* Show emoji when no image URL or image failed to load */}
         {(!deal.imageUrl || imageFailed) && (
           <span className="text-6xl opacity-50 group-hover:scale-110 transition-transform duration-300">
-            {style.emoji}
+            {getCategoryEmoji(cat, deal.title)}
           </span>
         )}
 
