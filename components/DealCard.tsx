@@ -128,7 +128,7 @@ function getCategoryEmoji(category: string, title: string): string {
   return catStyle.emoji;
 }
 
-export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
+export default function DealCard({ deal, trending, featured }: { deal: Deal; trending?: boolean; featured?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -339,7 +339,7 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
               {formatPrice(deal.dealPrice, deal.currency, deal.country)}
             </span>
           )}
-          {hasBadPriceData && (
+          {hasBadPriceData && !featured && (
             <span className="text-sm text-gray-400 italic">Check price on retailer site</span>
           )}
           {!isPromo && !hasInflatedRrp && deal.originalPrice != null && deal.originalPrice !== deal.dealPrice && (
