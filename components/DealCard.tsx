@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Clock, Flame, Sparkles, Timer, Zap, Tag, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
@@ -116,6 +117,9 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
 };
 
 export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
   const expiry    = timeUntilExpiry(deal.expiresAt);
   const expired   = expiry === "Expired";
   const fresh     = isNew(deal.createdAt);
@@ -208,28 +212,37 @@ export default function DealCard({ deal, trending }: { deal: Deal; trending?: bo
     >
       {/* Image / placeholder — fallback chain: scraped → OG tag → category emoji */}
       <div className={`relative h-36 sm:h-44 bg-gradient-to-br ${style.bg} flex items-center justify-center overflow-hidden`}>
-        {deal.imageUrl ? (
-          <img
-            src={deal.imageUrl}
-            alt={deal.title}
-            className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              // Fallback 1: Try OG tag from deal metadata
-              const ogImage = deal.ogImage;
-              if (ogImage && e.currentTarget.src !== ogImage) {
-                e.currentTarget.src = ogImage;
-              } else {
-                // Fallback 2: Hide broken image, show emoji placeholder instead
-                e.currentTarget.style.display = "none";
-                const emoji = e.currentTarget.nextElementSibling;
-                if (emoji) emoji.classList.remove("hidden");
-              }
-            }}
-          />
+        {deal.imageUrl && !imageFailed ? (
+          <>
+            {/* Skeleton placeholder while loading */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+            )}
+            <img
+              src={deal.imageUrl}
+              alt={deal.title}
+              loading="lazy"
+              className={`h-full w-full object-contain p-4 group-hover:scale-105 transition-all duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                // Fallback 1: Try OG tag from deal metadata
+                const ogImage = deal.ogImage;
+                if (ogImage && e.currentTarget.src !== ogImage) {
+                  e.currentTarget.src = ogImage;
+                } else {
+                  // Fallback 2: All fallbacks exhausted, show emoji placeholder
+                  setImageFailed(true);
+                }
+              }}
+            />
+          </>
         ) : null}
-        <span className={`text-6xl opacity-50 group-hover:scale-110 transition-transform duration-300 ${deal.imageUrl ? "hidden" : ""}`}>
-          {style.emoji}
-        </span>
+        {/* Show emoji when no image URL or image failed to load */}
+        {(!deal.imageUrl || imageFailed) && (
+          <span className="text-6xl opacity-50 group-hover:scale-110 transition-transform duration-300">
+            {style.emoji}
+          </span>
+        )}
 
         {/* Only show % when we verified it from actual prices — no DB guesses */}
         {discountVerified && discountPct != null && discountPct > 0 && (
