@@ -45,7 +45,7 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
   await client.connect();
   try {
     const result = await client.query(
-      `SELECT title, source, discount_pct,
+      `SELECT title, source, slug, discount_pct,
               CAST(original_price AS float) AS original_price,
               CAST(deal_price AS float) AS deal_price,
               url, image_url
