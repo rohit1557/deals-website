@@ -116,7 +116,7 @@ const CATEGORY_STYLE: Record<string, { bg: string; emoji: string; badge: string 
   Other:   { bg: "from-gray-50 to-slate-100",     emoji: "🏷️", badge: "bg-gray-100 text-gray-600" },
 };
 
-export default function DealCard({ deal, trending }: { deal: Deal; trending?: boolean }) {
+export default function DealCard({ deal, trending, featured }: { deal: Deal; trending?: boolean; featured?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
