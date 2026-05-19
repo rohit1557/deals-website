@@ -131,6 +131,7 @@ function getCategoryEmoji(category: string, title: string): string {
 export default function DealCard({ deal, trending, featured }: { deal: Deal; trending?: boolean; featured?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [fallbackSource, setFallbackSource] = useState<"imageUrl" | "ogImage" | "placeholder">(deal.imageUrl ? "imageUrl" : deal.ogImage ? "ogImage" : "placeholder");
 
   const expiry    = timeUntilExpiry(deal.expiresAt);
   const expired   = expiry === "Expired";
