@@ -131,6 +131,7 @@ function getCategoryEmoji(category: string, title: string): string {
 export default function DealCard({ deal, trending, featured }: { deal: Deal; trending?: boolean; featured?: boolean }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
+  const [fallbackSource, setFallbackSource] = useState<"imageUrl" | "ogImage" | "placeholder">(deal.imageUrl ? "imageUrl" : deal.ogImage ? "ogImage" : "placeholder");
 
   const expiry    = timeUntilExpiry(deal.expiresAt);
   const expired   = expiry === "Expired";
@@ -223,9 +224,10 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
             : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 cursor-pointer"
       }`}
     >
-      {/* Image / placeholder — fallback chain: scraped → OG tag → category emoji */}
+      {/* Image / placeholder — fallback chain: scraped imageUrl → ogImage → category emoji + gradient */}
       <div className={`relative h-36 sm:h-44 bg-gradient-to-br ${style.bg} flex items-center justify-center overflow-hidden`}>
-        {deal.imageUrl && !imageFailed ? (
+        {/* Fallback 1: Try primary imageUrl */}
+        {fallbackSource === "imageUrl" && deal.imageUrl ? (
           <>
             {/* Skeleton placeholder while loading */}
             {!imageLoaded && (
@@ -237,21 +239,41 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
               loading="lazy"
               className={`h-full w-full object-contain p-4 group-hover:scale-105 transition-all duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImageLoaded(true)}
-              onError={(e) => {
-                // Fallback 1: Try OG tag from deal metadata
-                const ogImage = deal.ogImage;
-                if (ogImage && e.currentTarget.src !== ogImage) {
-                  e.currentTarget.src = ogImage;
+              onError={() => {
+                // Try next fallback: ogImage
+                if (deal.ogImage) {
+                  setFallbackSource("ogImage");
                 } else {
-                  // Fallback 2: All fallbacks exhausted, show emoji placeholder
-                  setImageFailed(true);
+                  // No more fallbacks, show emoji
+                  setFallbackSource("placeholder");
                 }
               }}
             />
           </>
         ) : null}
-        {/* Show emoji when no image URL or image failed to load */}
-        {(!deal.imageUrl || imageFailed) && (
+
+        {/* Fallback 2: Try OG tag image from deal metadata */}
+        {fallbackSource === "ogImage" && deal.ogImage ? (
+          <>
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+            )}
+            <img
+              src={deal.ogImage}
+              alt={deal.title}
+              loading="lazy"
+              className={`h-full w-full object-contain p-4 group-hover:scale-105 transition-all duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                // ogImage failed, fall back to emoji placeholder
+                setFallbackSource("placeholder");
+              }}
+            />
+          </>
+        ) : null}
+
+        {/* Fallback 3: Category emoji + gradient background */}
+        {fallbackSource === "placeholder" && (
           <span className="text-6xl opacity-50 group-hover:scale-110 transition-transform duration-300">
             {getCategoryEmoji(cat, deal.title)}
           </span>
