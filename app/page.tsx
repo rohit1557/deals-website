@@ -238,18 +238,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       {/* ── Top Deals Today ── */}
       {!isFiltered && topDeals.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Zap className="h-5 w-5 text-amber-500 fill-amber-500" />
-            <h2 className="text-lg font-bold text-gray-900">Top Deals Today</h2>
-            <span className="text-xs text-gray-400">Highest verified discounts right now</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {topDeals.map((deal, i) => (
-              <DealCard key={deal.id} deal={deal} trending={i < 3} />
-            ))}
-          </div>
-        </section>
+        <TopDealSection deals={topDeals} />
       )}
 
       {/* ── Travel Picks — AU only (prices in AUD, AU destinations) ── */}
