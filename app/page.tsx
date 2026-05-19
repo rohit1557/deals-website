@@ -18,10 +18,11 @@ interface PageProps {
 
 function getOrderBy(sort: string) {
   switch (sort) {
-    case "discount":   return { discountPct: "desc" as const };
-    case "price_asc":  return { dealPrice:   "asc"  as const };
-    case "price_desc": return { dealPrice:   "desc" as const };
-    default:           return { createdAt:   "desc" as const };
+    case "discount":       return { discountPct: "desc" as const };
+    case "popular":        return { votes:       "desc" as const };
+    case "price_asc":      return { dealPrice:   "asc"  as const };
+    case "expiring_soon":  return { expiresAt:   "asc"  as const };
+    default:               return { createdAt:   "desc" as const };
   }
 }
 

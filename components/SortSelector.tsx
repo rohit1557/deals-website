@@ -4,10 +4,11 @@ import { useTransition } from "react";
 import { ArrowUpDown } from "lucide-react";
 
 const SORT_OPTIONS = [
-  { value: "newest",     label: "Newest first" },
-  { value: "discount",   label: "Best discount" },
-  { value: "price_asc",  label: "Price: low → high" },
-  { value: "price_desc", label: "Price: high → low" },
+  { value: "newest",         label: "Newest" },
+  { value: "discount",       label: "Highest Discount" },
+  { value: "popular",        label: "Most Popular" },
+  { value: "price_asc",      label: "Price Low-High" },
+  { value: "expiring_soon",  label: "Expiring Soon" },
 ];
 
 export default function SortSelector({ current }: { current: string }) {
