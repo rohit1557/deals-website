@@ -1,7 +1,12 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: "noindex",
+};
 
 export default async function Page() {
   const rows = await db.$queryRaw<Array<{ date: string }>>`

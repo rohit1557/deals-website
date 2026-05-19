@@ -10,6 +10,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://dealdrop.au"),
   title: "DealDrop — Great Deals in Australia & India",
   description:
     "Real promo deals from Amazon AU, OzBargain, Flipkart and more. Updated every hour. Free, no signup needed.",
