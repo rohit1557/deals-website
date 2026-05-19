@@ -220,21 +220,25 @@ export default async function HomePage({ searchParams }: PageProps) {
         </section>
       )}
 
-      {/* ── Search + Sort + Category (sticky on scroll) ── */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Suspense>
-            <SearchBar />
-          </Suspense>
-          <Suspense>
-            <SortSelector current={sort} />
-          </Suspense>
+      {/* ── Category Filter (sticky below hero) ── */}
+      <div className="sticky top-0 z-40 bg-white py-4 border-b border-gray-100 shadow-sm">
+        <div className="overflow-x-auto">
+          <div className="flex gap-2 pb-2 min-w-min px-0.5">
+            <Suspense>
+              <CategoryFilter />
+            </Suspense>
+          </div>
         </div>
-        <div className="sticky top-0 z-30 bg-white pb-3 border-b border-gray-100">
-          <Suspense>
-            <CategoryFilter />
-          </Suspense>
-        </div>
+      </div>
+
+      {/* ── Search + Sort ── */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Suspense>
+          <SearchBar />
+        </Suspense>
+        <Suspense>
+          <SortSelector current={sort} />
+        </Suspense>
       </div>
 
       {/* ── Top Deals Today ── */}
