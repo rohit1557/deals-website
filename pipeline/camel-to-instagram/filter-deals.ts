@@ -1,13 +1,16 @@
 import type { RawDeal } from "./fetch-deals";
 
-const VISUAL_CATEGORIES = ["Tech", "Gaming", "Home", "Fashion", "Beauty"];
+// Instagram-worthy categories — only these get posted
+const INSTAGRAM_CATEGORIES = ["Tech", "Gaming", "Fashion", "Beauty", "Home", "Kitchen", "Fragrance"];
 
-// Only post deals with meaningful real discounts.
-// OR logic: a big % drop on a cheap item OR a big saving on an expensive item both qualify.
-const MIN_DROP_PCT     = 20;   // minimum % off
-const MIN_SAVINGS_LOW  = 20;   // minimum $ saved (at 20%+)
-const MIN_SAVINGS_HIGH = 60;   // if savings >= $60, only needs 15%+ drop
-const MIN_DEAL_PRICE   = 50;   // don't post anything under $50
+// Products that look terrible on Instagram regardless of discount
+const SKIP_TITLE_RE = /\b(server\s*rack|rack\s*shelf|patch\s*panel|cable\s*manag|keystone|ethernet\s*switch|network\s*switch|patchbay|unmanaged\s*switch|managed\s*switch|sprayer|pressure\s*washer|lawn\s*mow|weed\s*killer|fertiliz|electric\s*motor|hydraulic|compressor|industrial|accounting|textbook|programming|software\s*engineering|business\s*analy|analysis\s*technique|reference\s*guide|handbook|rack\s*unit|rack\s*mount|data\s*center|pipe\s*fitting|plumbing|valve|gasket|floor\s*stand|music\s*stand)\b/i;
+
+const MIN_DROP_PCT     = 20;
+const MIN_SAVINGS_LOW  = 20;
+const MIN_SAVINGS_HIGH = 60;
+const MIN_DEAL_PRICE   = 25;
+const MAX_DEAL_PRICE   = 500;  // over $500 feels out of reach for impulse
 const MAX_AGE_HOURS    = 48;
 
 export interface ScoredDeal extends RawDeal {
@@ -17,56 +20,68 @@ export interface ScoredDeal extends RawDeal {
 
 function guessCategory(title: string): string {
   const t = title.toLowerCase();
-  if (/\b(phone|laptop|tablet|headphone|earb|speaker|camera|tv|monitor|keyboard|mouse|ssd|gpu|cpu|charger|usb|cable|router|smart\s*watch|kindle)\b/.test(t)) return "Tech";
-  if (/\b(game|gaming|controller|console|playstation|xbox|nintendo|steam)\b/.test(t)) return "Gaming";
-  if (/\b(shirt|pants|dress|shoe|jacket|jeans|hoodie|sneaker|boot|sock|underwear|bra)\b/.test(t)) return "Fashion";
-  if (/\b(coffee|kitchen|cookware|blender|air\s*fryer|vacuum|mattress|pillow|towel|lamp|furniture)\b/.test(t)) return "Home";
-  if (/\b(skincare|moistur|serum|lipstick|mascara|foundation|perfume|cologne|shampoo|conditioner)\b/.test(t)) return "Beauty";
-  if (/\b(flight|hotel|resort|travel|holiday|luggage|backpack)\b/.test(t)) return "Travel";
+  if (/\b(perfume|cologne|fragrance|eau\s*de|toilette|parfum)\b/.test(t))                                                          return "Fragrance";
+  if (/\b(skincare|moistur|serum|lipstick|mascara|foundation|blush|concealer|shampoo|conditioner|hair\s*care|nail)\b/.test(t))     return "Beauty";
+  if (/\b(shirt|pants|dress|shoe|jacket|jeans|hoodie|sneaker|boot|sock|underwear|bra|legging|activewear|swimwear|watch)\b/.test(t)) return "Fashion";
+  if (/\b(game|gaming|controller|console|playstation|xbox|nintendo|steam|headset)\b/.test(t))                                      return "Gaming";
+  if (/\b(airpod|iphone|samsung|pixel|phone|laptop|tablet|headphone|earbud|speaker|camera|tv|monitor|keyboard|mouse|kindle|smart\s*watch|smartwatch|robot\s*vacuum|robot\s*mop)\b/.test(t)) return "Tech";
+  if (/\b(air\s*fryer|blender|coffee|nespresso|keurig|instant\s*pot|rice\s*cooker|toaster|mixer|food\s*processor)\b/.test(t))     return "Kitchen";
+  if (/\b(vacuum|mattress|pillow|bedsheet|towel|lamp|candle|diffuser|storage|organis|home\s*decor|cushion|throw)\b/.test(t))       return "Home";
+  if (/\b(luggage|backpack|travel|suitcase)\b/.test(t))                                                                            return "Travel";
   return "Other";
 }
 
 function scoreDeal(deal: RawDeal): number {
   let score = 0;
+  const cat = guessCategory(deal.title);
 
-  // Actual drop % is primary signal
-  score += (deal.dropPct ?? 0) * 3;
+  // Category is the dominant signal — non-Instagram products shouldn't rank at all
+  const categoryBonus: Record<string, number> = {
+    Fragrance: 80, Beauty: 75, Fashion: 70,
+    Gaming: 65, Tech: 60, Kitchen: 55, Home: 50,
+    Travel: 30, Other: -50,
+  };
+  score += categoryBonus[cat] ?? -50;
 
-  // Absolute savings matter — a $200 saving at 15% beats a $5 saving at 25%
-  score += Math.min(deal.savingsAbs ?? 0, 300) * 0.5;
+  // Discount %
+  score += (deal.dropPct ?? 0) * 2;
+
+  // Absolute savings
+  score += Math.min(deal.savingsAbs ?? 0, 200) * 0.4;
 
   // Recency
   const hoursOld = (Date.now() - deal.pubDate.getTime()) / 3_600_000;
-  if (hoursOld < 4)  score += 40;
-  else if (hoursOld < 12) score += 20;
+  if (hoursOld < 4)       score += 30;
+  else if (hoursOld < 12) score += 15;
   else if (hoursOld < 24) score += 5;
 
-  // Price sweet spot for AU Instagram — $30–$600
+  // Impulse price sweet spot $25–$200
   const p = deal.dealPrice ?? 0;
-  if (p >= 30 && p <= 600) score += 15;
-
-  // Visual category bonus
-  if (VISUAL_CATEGORIES.includes(guessCategory(deal.title))) score += 10;
+  if (p >= 25 && p <= 200)       score += 25;
+  else if (p > 200 && p <= 350)  score += 10;
 
   return score;
 }
 
 export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
   const now = Date.now();
-
   const passed: RawDeal[] = [];
 
   for (const d of deals) {
     const savings  = d.savingsAbs ?? 0;
     const ageHours = (now - d.pubDate.getTime()) / 3_600_000;
     const price    = d.dealPrice ?? 0;
+    const cat      = guessCategory(d.title);
 
     let reason = "";
-    if (!d.dropPct)                                                        reason = "no dropPct";
-    else if (price < MIN_DEAL_PRICE)                                       reason = `price $${price} < $${MIN_DEAL_PRICE}`;
-    else if (ageHours > MAX_AGE_HOURS)                                     reason = `age ${ageHours.toFixed(1)}h > ${MAX_AGE_HOURS}h`;
-    else if (d.dropPct >= MIN_DROP_PCT && savings >= MIN_SAVINGS_LOW)    { passed.push(d); continue; }
-    else if (d.dropPct >= 15       && savings >= MIN_SAVINGS_HIGH)       { passed.push(d); continue; }
+    if (!d.dropPct)                               reason = "no dropPct";
+    else if (price < MIN_DEAL_PRICE)              reason = `price $${price} < $${MIN_DEAL_PRICE}`;
+    else if (price > MAX_DEAL_PRICE)              reason = `price $${price} > $${MAX_DEAL_PRICE}`;
+    else if (ageHours > MAX_AGE_HOURS)            reason = `age ${ageHours.toFixed(1)}h > ${MAX_AGE_HOURS}h`;
+    else if (SKIP_TITLE_RE.test(d.title))         reason = "non-Instagram product type";
+    else if (!INSTAGRAM_CATEGORIES.includes(cat)) reason = `category "${cat}" not Instagram-worthy`;
+    else if (d.dropPct >= MIN_DROP_PCT && savings >= MIN_SAVINGS_LOW)  { passed.push(d); continue; }
+    else if (d.dropPct >= 15 && savings >= MIN_SAVINGS_HIGH)           { passed.push(d); continue; }
     else reason = `drop ${d.dropPct}% savings $${savings}`;
 
     console.log(`[filter] SKIP "${d.title.slice(0, 60)}" — ${reason}`);

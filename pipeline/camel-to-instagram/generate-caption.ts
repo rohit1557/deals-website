@@ -5,21 +5,31 @@ import type { ScoredDeal } from "./filter-deals";
 // within the first ~125 chars so it's visible before Instagram's "more" truncation.
 const AMAZON_DISCLOSURE = "#ad | As an Amazon Associate I earn from qualifying purchases.\n\n";
 
-const HASHTAGS = [
-  "#DealDrop", "#AussieDeals", "#AmazonAustralia", "#AmazonDeals",
-  "#PriceDrop", "#ShoppingDeals", "#BargainHunter", "#DealAlert",
-  "#AuDeals", "#SaveMoney",
+// Rotate hashtag pools — Instagram penalises identical blocks on every post
+const HASHTAG_POOLS = [
+  ["#DealDrop", "#AussieDeals", "#AmazonAustralia", "#PriceDrop", "#BargainHunter", "#DealAlert", "#AuDeals", "#SaveMoney", "#ShoppingAustralia", "#OnlineShopping"],
+  ["#DealDrop", "#AuDeals", "#AmazonAU", "#BigSavings", "#DailyDeals", "#ShoppingDeals", "#AussieBargins", "#PriceAlert", "#WeeklyDeals", "#BudgetLiving"],
+  ["#DealDrop", "#AussieDeals", "#AmazonAustralia", "#SaleAlert", "#DealHunter", "#SmartShopping", "#SavingsAustralia", "#TopDeals", "#OnlineSale", "#AuShopping"],
+  ["#DealDrop", "#AuDeals", "#AmazonDeals", "#CashSaver", "#DealsDaily", "#AussieShoppers", "#PriceDrop", "#BudgetFinds", "#ShopSmart", "#AuBargains"],
 ];
 
 const CATEGORY_TAGS: Record<string, string[]> = {
-  Tech:    ["#TechDeals", "#GadgetDeals", "#TechSale"],
-  Gaming:  ["#GamingDeals", "#GamerLife", "#GamingSale"],
-  Home:    ["#HomeDeals", "#HomeDecor", "#KitchenDeals"],
-  Fashion: ["#FashionDeals", "#StyleDeals", "#OOTDDeals"],
-  Beauty:  ["#BeautyDeals", "#SkincareDeals", "#MakeupDeals"],
-  Travel:  ["#TravelDeals", "#TravelAustralia"],
-  Other:   [],
+  Tech:      ["#TechDeals", "#GadgetDeals", "#TechSale", "#AusTech"],
+  Gaming:    ["#GamingDeals", "#GamerLife", "#GamingSale", "#AusGaming"],
+  Home:      ["#HomeDeals", "#HomeDecor", "#HomeShopping", "#AusHome"],
+  Kitchen:   ["#KitchenDeals", "#KitchenGadgets", "#CookingAustralia"],
+  Fashion:   ["#FashionDeals", "#StyleDeals", "#FashionAustralia", "#AusFashion"],
+  Beauty:    ["#BeautyDeals", "#SkincareDeals", "#BeautyAustralia", "#AusBeauty"],
+  Fragrance: ["#PerfumeDeals", "#FragranceAustralia", "#PerfumeLovers", "#ScentOfTheDay"],
+  Travel:    ["#TravelDeals", "#TravelAustralia", "#LuggageDeals"],
+  Other:     [],
 };
+
+function pickHashtags(category: string): string {
+  const pool = HASHTAG_POOLS[Math.floor(Math.random() * HASHTAG_POOLS.length)];
+  const catTags = CATEGORY_TAGS[category] ?? [];
+  return [...pool, ...catTags].join(" ");
+}
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat("en-AU", {
@@ -64,8 +74,6 @@ function templateCaption(deal: ScoredDeal): string {
   const priceStr   = deal.dealPrice    != null ? formatPrice(deal.dealPrice)    : "Great price";
   const wasStr     = deal.originalPrice!= null ? ` (was ${formatPrice(deal.originalPrice)})` : "";
   const savingsStr = deal.savingsAbs   != null ? ` • Save ${formatPrice(deal.savingsAbs)}` : "";
-  const catTags    = CATEGORY_TAGS[deal.category] ?? [];
-  const shortUrl   = deal.amazonUrl.replace("https://www.", "");
 
   return AMAZON_DISCLOSURE + [
     pick(HOOKS),
@@ -76,9 +84,8 @@ function templateCaption(deal: ScoredDeal): string {
     pick(QUESTIONS),
     "",
     pick(CTAS),
-    `🛒 ${shortUrl}`,
     "",
-    [...HASHTAGS, ...catTags].join(" "),
+    pickHashtags(deal.category),
   ].join("\n");
 }
 
@@ -140,9 +147,8 @@ Rules:
         body,
         "",
         pick(CTAS),
-        `🛒 ${shortUrl}`,
         "",
-        [...HASHTAGS, ...(CATEGORY_TAGS[deal.category] ?? [])].join(" "),
+        pickHashtags(deal.category),
       ].join("\n");
     }
   } catch (err) {
@@ -185,16 +191,15 @@ export async function generateMultiCaptionWithGroq(
       const price   = d.dealPrice  != null ? formatPrice(d.dealPrice)  : "";
       const drop    = d.dropPct    != null ? ` (-${d.dropPct}%)`       : "";
       const savings = d.savingsAbs != null ? ` • save ${formatPrice(d.savingsAbs)}` : "";
-      const url     = d.amazonUrl.replace("https://www.", "");
-      return `${i + 1}. ${d.title.slice(0, 55)}\n   ${price}${drop}${savings}\n   🔗 ${url}`;
+      return `${i + 1}. ${d.title.slice(0, 60)}\n   ${price}${drop}${savings}`;
     }),
     "",
-    "💾 Save this post so you don't forget!",
+    "💾 Save this post — links in bio!",
     "👆 Follow DealDrop for daily Aussie bargains",
     "",
     "Which deal are you grabbing? Drop a number below 👇",
     "",
-    HASHTAGS.join(" "),
+    pickHashtags(deals[0]?.category ?? "Other"),
   ];
 
   if (!apiKey) return AMAZON_DISCLOSURE + templateLines.join("\n");
@@ -243,14 +248,13 @@ Rules:
           const price   = d.dealPrice  != null ? formatPrice(d.dealPrice)  : "";
           const drop    = d.dropPct    != null ? ` (-${d.dropPct}%)`       : "";
           const savings = d.savingsAbs != null ? ` • save ${formatPrice(d.savingsAbs)}` : "";
-          const url     = d.amazonUrl.replace("https://www.", "");
-          return `${i + 1}. ${d.title.slice(0, 55)}\n   ${price}${drop}${savings}\n   🔗 ${url}`;
+          return `${i + 1}. ${d.title.slice(0, 60)}\n   ${price}${drop}${savings}`;
         }),
         "",
-        "💾 Save this post so you don't forget!",
+        "💾 Save this post — links in bio!",
         "👆 Follow DealDrop for daily Aussie bargains",
         "",
-        HASHTAGS.join(" "),
+        pickHashtags(deals[0]?.category ?? "Other"),
       ].join("\n");
     }
   } catch {
