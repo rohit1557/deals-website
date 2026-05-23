@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
+import { db } from "@/lib/db";
 
-export const runtime = "edge";
+// Node.js runtime — edge runtime kills the worker before fire-and-forget fetch completes,
+// causing clicks to not be recorded. Node.js waits for the event loop to drain.
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -18,13 +21,12 @@ export async function GET(req: NextRequest) {
     return new Response("Invalid url", { status: 400 });
   }
 
-  // Fire-and-forget click tracking — don't await, don't slow the redirect
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://dealdrop.au";
-  fetch(`${siteUrl}/api/track`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dealId }),
-  }).catch(() => {});
+  // Insert click directly — no HTTP hop, no fire-and-forget reliability issues
+  if (dealId) {
+    db.$executeRaw`
+      INSERT INTO deal_clicks (deal_id, clicked_at) VALUES (${dealId}::text, NOW())
+    `.catch(() => {});
+  }
 
   return Response.redirect(target.toString(), 302);
 }
