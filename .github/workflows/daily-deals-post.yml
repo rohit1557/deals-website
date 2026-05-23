@@ -8,6 +8,10 @@ on:
         description: "Number of deals to generate (1-10)"
         required: false
         default: "5"
+      post_type:
+        description: "Post type: single | top5 | budget | category:Tech"
+        required: false
+        default: "single"
 jobs:
   generate-posts:
     runs-on: ubuntu-latest
@@ -37,6 +41,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
           MAX_DEALS: ${{ github.event.inputs.max_deals || '1' }}
+          POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
           OUTPUT_DIR: ./output
         run: npm run generate
       - name: Upload deal posts as artifact
@@ -44,5 +49,5 @@ jobs:
         with:
           name: instagram-deals-${{ github.run_number }}
           path: pipeline/camel-to-instagram/output/
-          retention-days: 7
-          if-no-files-found: warn
+          retention-days: 30
+          if-no-files-found: error
