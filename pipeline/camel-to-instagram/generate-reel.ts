@@ -267,6 +267,18 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
+  // Upload to Cloudinary so it's accessible from Android
+  try {
+    const { uploadVideoToCloudinary } = await import("./cloudinary");
+    const cloudUrl = await uploadVideoToCloudinary(videoPath);
+    if (cloudUrl) {
+      fs.writeFileSync(path.join(outputDir, "reel-download-url.txt"), cloudUrl);
+      console.log("[generate-reel] Download on Android:", cloudUrl);
+    }
+  } catch (err) {
+    console.warn("[generate-reel] Cloudinary upload failed (reel still saved locally):", err);
+  }
+
   await saveReelPost(deals);
 
   console.log("[generate-reel] Done");
