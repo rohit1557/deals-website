@@ -1,3 +1,5 @@
+import { Client } from "pg";
+
 const AFFILIATE_TAG = process.env.AFFILIATE_TAG ?? "dealdrop0d5-22";
 
 // CCC AU top_drops feed — 20 items, updated throughout the day.
@@ -125,4 +127,66 @@ export async function fetchDeals(): Promise<RawDeal[]> {
 
   console.log(`[fetch-deals] ${all.length} unique deals from CCC feeds`);
   return all;
+}
+
+// Fallback: pull Instagram-worthy deals from our own DB when CCC has nothing
+export async function fetchDealsFromDB(): Promise<RawDeal[]> {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.warn("[fetch-deals] No DATABASE_URL — skipping DB fallback");
+    return [];
+  }
+
+  const client = new Client({ connectionString: dbUrl });
+  try {
+    await client.connect();
+    const { rows } = await client.query<{
+      title: string; url: string; deal_price: string | null;
+      original_price: string | null; discount_pct: number | null; created_at: Date;
+    }>(`
+      SELECT title, url, deal_price, original_price, discount_pct, created_at
+      FROM deals
+      WHERE url LIKE '%amazon.com.au%'
+        AND category IN ('Tech','Gaming','Fashion','Beauty','Fragrance','Home','Kitchen')
+        AND discount_pct >= 20
+        AND deal_price IS NOT NULL
+        AND deal_price::numeric BETWEEN 25 AND 500
+        AND created_at > NOW() - INTERVAL '7 days'
+      ORDER BY discount_pct DESC, created_at DESC
+      LIMIT 30
+    `);
+    await client.end();
+
+    const deals: RawDeal[] = [];
+    for (const row of rows) {
+      const asinMatch = row.url.match(/\/dp\/([A-Z0-9]{10})/);
+      if (!asinMatch) continue;
+      const asin = asinMatch[1];
+      const dealPrice     = row.deal_price     ? parseFloat(row.deal_price)     : null;
+      const originalPrice = row.original_price ? parseFloat(row.original_price) : null;
+      const savingsAbs    = dealPrice && originalPrice ? parseFloat((originalPrice - dealPrice).toFixed(2)) : null;
+
+      // Strip DB title suffix (e.g. " - down 30.00% ($49.50) to $115.50 from $165.00")
+      const cleanTitle = row.title.replace(/\s*-\s*down\s+[\d.]+%.*$/i, "").trim();
+
+      deals.push({
+        title:         cleanTitle,
+        asin,
+        amazonUrl:     row.url.includes("tag=") ? row.url : `${row.url}${row.url.includes("?") ? "&" : "?"}tag=${AFFILIATE_TAG}`,
+        dealPrice,
+        originalPrice,
+        dropPct:       row.discount_pct,
+        savingsAbs,
+        pubDate:       row.created_at,
+        description:   "",
+      });
+    }
+
+    console.log(`[fetch-deals] ${deals.length} deals from DB fallback`);
+    return deals;
+  } catch (err) {
+    console.warn("[fetch-deals] DB fallback failed:", err);
+    try { await client.end(); } catch {}
+    return [];
+  }
 }

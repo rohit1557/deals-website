@@ -1,6 +1,6 @@
 import path from "path";
 import { writeFileSync, mkdirSync } from "fs";
-import { fetchDeals } from "./fetch-deals";
+import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
 import { filterDeals } from "./filter-deals";
 import type { ScoredDeal } from "./filter-deals";
 import { enhanceCaptionWithGroq, generateMultiCaptionWithGroq } from "./generate-caption";
@@ -67,6 +67,15 @@ async function main() {
   }
 
   const topDeals: ScoredDeal[] = candidates.slice(0, MAX_DEALS);
+
+  if (topDeals.length === 0) {
+    console.log("[pipeline] No qualifying CCC deals — trying DB fallback...");
+    const dbDeals = await fetchDealsFromDB();
+    const freshDbAsins = await filterUnposted(dbDeals.map(d => d.asin));
+    const freshDbDeals = dbDeals.filter(d => freshDbAsins.has(d.asin));
+    const dbCandidates = filterDeals(freshDbDeals.length > 0 ? freshDbDeals : dbDeals, 20);
+    topDeals.push(...dbCandidates.slice(0, MAX_DEALS));
+  }
 
   if (topDeals.length === 0) {
     console.log("[pipeline] No qualifying deals today — skipping post. Nothing to worry about.");
