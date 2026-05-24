@@ -44,8 +44,9 @@ jobs:
         run: npm run generate
       - name: Upload deal posts as artifact
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: instagram-deals-${{ github.run_number }}
           path: pipeline/camel-to-instagram/output/
           retention-days: 30
-          if-no-files-found: error
+          if-no-files-found: warn
