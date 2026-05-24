@@ -25,11 +25,13 @@ jobs:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: pipeline/camel-to-instagram/package.json
+      - name: Install ffmpeg
+        run: sudo apt-get install -y ffmpeg
       - name: Install dependencies
         run: npm install
       - name: Install Puppeteer browser
         run: npx puppeteer browsers install chrome
-      - name: Generate and queue deal post
+      - name: Generate static deal post
         env:
           POST_TO_INSTAGRAM: "false"
           POST_TO_BUFFER: "false"
@@ -42,6 +44,12 @@ jobs:
           POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
           OUTPUT_DIR: ./output
         run: npm run generate
+      - name: Generate Reel
+        continue-on-error: true
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
+        run: npm run generate:reel
       - name: Upload deal posts as artifact
         uses: actions/upload-artifact@v4
         continue-on-error: true

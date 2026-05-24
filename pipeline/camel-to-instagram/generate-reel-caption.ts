@@ -34,35 +34,43 @@ function pickRandomHashtags(count: number = 6): string[] {
   return shuffled.slice(0, count);
 }
 
+const AD_DISCLOSURE = "#ad | As an Amazon Associate I earn from qualifying purchases.\n\n";
+
+const HOOKS = [
+  "Wait… this price makes absolutely no sense 😳",
+  "How is Amazon AU even allowed to do this?! 💀",
+  "POV: You just found the deal of the week 👇",
+  "Nope, this deal is actually insane 🤯",
+  "Your wallet called. It said thank you 💚",
+  "Best price of the year. Not even kidding 🔥",
+];
+
 export function generateReelCaption(deals: WeeklyDeal[]): string {
   if (deals.length === 0) return "";
 
   const topDeal = deals[0];
-  const friendlySource = topDeal.source === 'camelcamelcamel' ? 'Amazon AU' : (topDeal.source ?? 'deal');
   const shortTitle = topDeal.title.length > 50
-    ? topDeal.title.slice(0, 50).replace(/\s+\S*$/, '') + '...'
+    ? topDeal.title.slice(0, 50).replace(/\s+\S*$/, "") + "..."
     : topDeal.title;
-  const templateChoice = Math.floor(Math.random() * 3);
-  const hashtags = pickRandomHashtags(6).join(" ");
+  const hashtags = pickRandomHashtags(8).join(" ");
   const discountPct = topDeal.discount_pct ?? 0;
   const originalPrice = formatPrice(topDeal.original_price);
   const dealPrice = formatPrice(topDeal.deal_price);
   const savingsAmount = formatPrice(savings(topDeal));
   const dealCount = deals.length;
-  const moreDealsCta = dealCount > 1 ? ` + ${dealCount - 1} more deals` : "";
+  const moreDealsCta = dealCount > 1 ? `\n\n+ ${dealCount - 1} more deal${dealCount > 2 ? "s" : ""} in bio 👆` : "";
+  const hook = HOOKS[Math.floor(Math.random() * HOOKS.length)];
 
-  let caption = "";
+  const templateChoice = Math.floor(Math.random() * 3);
+  let body = "";
 
   if (templateChoice === 0) {
-    // Template A — Urgency
-    caption = `⏰ Deal alert! ${shortTitle} is down ${discountPct}% to ${dealPrice} (was ${originalPrice}). Link in bio 🔥${moreDealsCta}\n\n${hashtags}`;
+    body = `${hook}\n\n${shortTitle} — ${discountPct}% off!\n${dealPrice} (was ${originalPrice}) • Save ${savingsAmount}\n\nWould you grab this? 🛒${moreDealsCta}\n\n👆 Link in bio\n\n${hashtags}`;
   } else if (templateChoice === 1) {
-    // Template B — Value
-    caption = `💸 Save ${savingsAmount} on ${shortTitle}. One of the best prices we have tracked. Grab it before it is gone 👇${moreDealsCta}\n\n${hashtags}`;
+    body = `${hook}\n\n${shortTitle}\nNow only ${dealPrice} (was ${originalPrice}) — save ${savingsAmount} today 🏃\n\nTag someone who needs this 👇${moreDealsCta}\n\n👆 Link in bio\n\n${hashtags}`;
   } else {
-    // Template C — Curiosity
-    caption = `This ${friendlySource} deal caught our eye... ${shortTitle} for ${dealPrice} — that is ${discountPct}% off 🤯 Who is grabbing this?${moreDealsCta}\n\n${hashtags}`;
+    body = `${hook}\n\n${shortTitle} just dropped to ${dealPrice} — that's ${discountPct}% off 😤\n\nSave this before the price jumps 💾${moreDealsCta}\n\n👆 Link in bio\n\n${hashtags}`;
   }
 
-  return caption;
+  return AD_DISCLOSURE + body;
 }

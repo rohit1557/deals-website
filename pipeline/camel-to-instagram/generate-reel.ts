@@ -51,15 +51,17 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
               url, image_url
        FROM deals
        WHERE created_at > NOW() - INTERVAL '7 days'
-         AND source = $1
          AND is_active = true
-         AND discount_pct BETWEEN 5 AND 95
+         AND category IN ('Tech','Gaming','Fashion','Beauty','Fragrance','Home','Kitchen')
+         AND url LIKE '%amazon.com.au%'
+         AND discount_pct >= 20
          AND original_price > 0
          AND deal_price > 0
+         AND deal_price BETWEEN 25 AND 500
          AND deal_price < original_price
-       ORDER BY discount_pct DESC
+       ORDER BY discount_pct DESC, created_at DESC
        LIMIT 3`,
-      ["camelcamelcamel"]
+      []
     );
     return result.rows;
   } finally {

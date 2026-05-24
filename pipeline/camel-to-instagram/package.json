@@ -5,6 +5,7 @@
   "description": "Daily DealDrop Instagram post generator — fetches CCC top drops, generates 1080x1080 images",
   "scripts": {
     "generate": "ts-node index.ts",
+    "generate:reel": "ts-node generate-reel.ts",
     "build": "tsc --noEmit",
     "test": "vitest run"
   },
