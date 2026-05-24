@@ -47,3 +47,23 @@ export async function uploadToGoogleDrive(filePath: string): Promise<string> {
   console.log(`[drive] Uploaded! View on Android: ${viewLink}`);
   return viewLink;
 }
+
+export async function uploadTextToGoogleDrive(content: string, fileName: string): Promise<void> {
+  const clientId     = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
+  const folderId     = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+  if (!clientId || !clientSecret || !refreshToken || !folderId) return;
+
+  const auth = new google.auth.OAuth2(clientId, clientSecret);
+  auth.setCredentials({ refresh_token: refreshToken });
+  const drive = google.drive({ version: "v3", auth });
+
+  const { Readable } = await import("stream");
+  await drive.files.create({
+    requestBody: { name: fileName, parents: [folderId] },
+    media: { mimeType: "text/plain", body: Readable.from([content]) },
+  });
+  console.log(`[drive] Caption uploaded: ${fileName}`);
+}
