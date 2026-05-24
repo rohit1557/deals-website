@@ -267,6 +267,18 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
+  // Upload to Google Drive so it appears in your Drive folder on Android
+  try {
+    const { uploadToGoogleDrive } = await import("./upload-drive");
+    const driveUrl = await uploadToGoogleDrive(videoPath);
+    if (driveUrl) {
+      fs.writeFileSync(path.join(outputDir, "reel-drive-url.txt"), driveUrl);
+      console.log("[generate-reel] Google Drive link:", driveUrl);
+    }
+  } catch (err) {
+    console.warn("[generate-reel] Google Drive upload failed (reel still saved locally):", err);
+  }
+
   await saveReelPost(deals);
 
   console.log("[generate-reel] Done");
