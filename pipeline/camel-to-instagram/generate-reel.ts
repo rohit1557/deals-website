@@ -267,16 +267,16 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
-  // Upload to Cloudinary — get a public URL you can open on Android to download
+  // Upload to Google Drive — appears in your Drive folder on Android automatically
   try {
-    const { uploadVideoToCloudinary } = await import("./cloudinary");
-    const cloudUrl = await uploadVideoToCloudinary(videoPath);
-    if (cloudUrl) {
-      fs.writeFileSync(path.join(outputDir, "reel-url.txt"), cloudUrl);
-      console.log("[generate-reel] Download on Android:", cloudUrl);
+    const { uploadToGoogleDrive } = await import("./upload-drive");
+    const driveUrl = await uploadToGoogleDrive(videoPath);
+    if (driveUrl) {
+      fs.writeFileSync(path.join(outputDir, "reel-drive-url.txt"), driveUrl);
+      console.log("[generate-reel] Google Drive link:", driveUrl);
     }
   } catch (err) {
-    console.warn("[generate-reel] Cloudinary upload failed (reel still in artifact):", err);
+    console.warn("[generate-reel] Google Drive upload failed (reel still in artifact):", err);
   }
 
   await saveReelPost(deals);
