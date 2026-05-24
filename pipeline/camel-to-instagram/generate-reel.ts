@@ -267,14 +267,19 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
-  // Upload to Google Drive — appears in your Drive folder on Android automatically
+  // Upload reel + caption to Google Drive — appears on Android automatically
   try {
-    const { uploadToGoogleDrive } = await import("./upload-drive");
+    const { uploadToGoogleDrive, uploadTextToGoogleDrive } = await import("./upload-drive");
+    const today = new Date().toISOString().slice(0, 10);
+
     const driveUrl = await uploadToGoogleDrive(videoPath);
     if (driveUrl) {
       fs.writeFileSync(path.join(outputDir, "reel-drive-url.txt"), driveUrl);
       console.log("[generate-reel] Google Drive link:", driveUrl);
     }
+
+    const caption = generateReelCaption(deals);
+    await uploadTextToGoogleDrive(caption, `DealDrop_Caption_${today}.txt`);
   } catch (err) {
     console.warn("[generate-reel] Google Drive upload failed (reel still in artifact):", err);
   }
