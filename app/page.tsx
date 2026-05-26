@@ -94,7 +94,7 @@ async function getTopDeals(country?: string): Promise<Deal[]> {
     // India: lower minimum (15%) — fewer extreme discounts; higher cap (90%) — fashion/electronics
     // AU: strict 40–75% range to weed out fake RRP
     discountPct: { gte: isIndia ? 15 : 40, lte: isIndia ? 90 : 75 },
-    ...(country ? { country } : {}),
+    country: country ?? "AU",
   };
   // Fetch extra so we have headroom after filtering promo deals
   const rows = await db.deal.findMany({
@@ -150,7 +150,7 @@ async function getEndingSoon(country?: string): Promise<Deal[]> {
     where: {
       isActive: true,
       expiresAt: { not: null, lte: cutoff, gte: new Date() },
-      ...(country ? { country } : {}),
+      country: country ?? "AU",
     },
     orderBy: { expiresAt: "asc" },
     take: 4,
