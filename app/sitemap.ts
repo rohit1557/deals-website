@@ -7,9 +7,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://dealdrop.au";
 
   const staticPages: MetadataRoute.Sitemap = [
-    { url: baseUrl,                changeFrequency: "hourly",  priority: 1.0, lastModified: new Date() },
-    { url: `${baseUrl}/instagram`, changeFrequency: "hourly",  priority: 0.9, lastModified: new Date() },
-    { url: `${baseUrl}/about`,     changeFrequency: "monthly", priority: 0.4, lastModified: new Date() },
+    { url: baseUrl,                  changeFrequency: "hourly",  priority: 1.0, lastModified: new Date() },
+    { url: `${baseUrl}/india-deals`, changeFrequency: "hourly",  priority: 0.9, lastModified: new Date() },
+    { url: `${baseUrl}/instagram`,   changeFrequency: "hourly",  priority: 0.8, lastModified: new Date() },
+    { url: `${baseUrl}/about`,       changeFrequency: "monthly", priority: 0.4, lastModified: new Date() },
     { url: `${baseUrl}/contact`,   changeFrequency: "yearly",  priority: 0.2, lastModified: new Date() },
     { url: `${baseUrl}/privacy`,   changeFrequency: "monthly", priority: 0.2, lastModified: new Date() },
     { url: `${baseUrl}/terms`,     changeFrequency: "monthly", priority: 0.2, lastModified: new Date() },

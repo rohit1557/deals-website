@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms of Use — DealDrop",
+  title: "Terms of Use — DealDrop AU",
 };
 
 export default function TermsPage() {

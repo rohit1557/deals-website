@@ -2,9 +2,9 @@ import { ShieldCheck, Clock, Zap, Globe, TrendingUp, Heart } from "lucide-react"
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About DealDrop — Real Deals from Australia & India",
+  title: "About DealDrop AU — Real Deals from Australia & India",
   description:
-    "DealDrop is an independent deal aggregator tracking Amazon AU, OzBargain, Flipkart and more. Built by Rohit Ramesh Naik.",
+    "DealDrop AU is an independent deal aggregator tracking Amazon AU, OzBargain, Flipkart and more. Built by Rohit Ramesh Naik.",
 };
 
 const HOW_IT_WORKS = [

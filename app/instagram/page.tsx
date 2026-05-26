@@ -2,8 +2,8 @@ import { db } from "@/lib/db";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "DealDrop — Latest Instagram Deals",
-  description: "All deals featured on our Instagram, updated daily. Best Amazon AU price drops.",
+  title: "DealDrop AU — Latest Instagram Deals",
+  description: "All deals featured on DealDrop AU's Instagram, updated daily. Best Amazon AU price drops.",
 };
 
 export const revalidate = 0;
