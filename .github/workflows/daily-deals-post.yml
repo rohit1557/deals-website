@@ -31,6 +31,16 @@ jobs:
         run: npm install
       - name: Install Puppeteer browser
         run: npx puppeteer browsers install chrome
+      - name: Download background music
+        continue-on-error: true
+        env:
+          BGMUSIC_URL: ${{ secrets.BGMUSIC_URL }}
+        run: |
+          if [ -n "$BGMUSIC_URL" ]; then
+            curl -fsSL "$BGMUSIC_URL" -o templates/bg-music.mp3 && echo "Background music downloaded" || echo "Music download failed — reel will be silent"
+          else
+            echo "BGMUSIC_URL not set — reel will be silent"
+          fi
       - name: Generate static deal post
         env:
           POST_TO_INSTAGRAM: "false"
@@ -53,6 +63,9 @@ jobs:
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
+          TRYPOST_API_TOKEN: ${{ secrets.TRYPOST_API_TOKEN }}
         run: npm run generate:reel
       - name: Upload deal posts as artifact
         uses: actions/upload-artifact@v4

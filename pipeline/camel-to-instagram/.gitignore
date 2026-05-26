@@ -2,3 +2,4 @@ node_modules/
 output/
 .env
 *.png
+templates/bg-music.mp3

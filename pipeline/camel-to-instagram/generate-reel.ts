@@ -168,6 +168,11 @@ async function stitchFramesIntoVideo(
   durations: number[],
   outputPath: string,
 ): Promise<void> {
+  const bgMusicPath = path.resolve(__dirname, "templates/bg-music.mp3");
+  const hasBgMusic = fs.existsSync(bgMusicPath);
+  const bgVolume = parseFloat(process.env.BGMUSIC_VOLUME ?? "0.15");
+  const totalDuration = durations.reduce((a, b) => a + b, 0);
+
   return new Promise((resolve, reject) => {
     const resolved = framePaths.map((fp) => path.resolve(fp));
     const n = resolved.length;
@@ -180,12 +185,12 @@ async function stitchFramesIntoVideo(
       offsets.push(+(sum - (i + 1) * TRANSITION).toFixed(3));
     }
 
-    let filterComplex = "";
+    let videoFilter = "";
     let prev = "0:v";
     for (let i = 0; i < n - 1; i++) {
       const out = i < n - 2 ? `out${i}` : "v";
-      filterComplex += `[${prev}][${i + 1}:v]xfade=transition=slideup:duration=${TRANSITION}:offset=${offsets[i]}[${out}]`;
-      if (i < n - 2) filterComplex += ";";
+      videoFilter += `[${prev}][${i + 1}:v]xfade=transition=slideup:duration=${TRANSITION}:offset=${offsets[i]}[${out}]`;
+      if (i < n - 2) videoFilter += ";";
       prev = out;
     }
 
@@ -194,13 +199,28 @@ async function stitchFramesIntoVideo(
       cmd = (cmd as any).input(fp).inputOptions(["-loop", "1", "-t", String(durations[i])]);
     });
 
-    cmd
-      .complexFilter(filterComplex, "v")
-      .outputOptions(["-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p", "-s", "1080x1920"])
-      .output(outputPath)
-      .on("end", () => { console.log(`[generate-reel] Video: ${outputPath}`); resolve(); })
-      .on("error", (err: Error) => reject(err))
-      .run();
+    if (hasBgMusic) {
+      // Loop music to cover full video length, set volume, fade out last 1.5s
+      const fadeStart = Math.max(0, totalDuration - 1.5);
+      const audioFilter = `${videoFilter};[${n}:a]aloop=loop=-1:size=2e+09,atrim=duration=${totalDuration},volume=${bgVolume},afade=t=out:st=${fadeStart}:d=1.5[a]`;
+      cmd = (cmd as any).input(bgMusicPath);
+      cmd
+        .complexFilter(audioFilter, ["v", "a"])
+        .outputOptions(["-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p", "-s", "1080x1920", "-c:a", "aac", "-shortest"])
+        .output(outputPath)
+        .on("end", () => { console.log(`[generate-reel] Video (with music): ${outputPath}`); resolve(); })
+        .on("error", (err: Error) => reject(err))
+        .run();
+    } else {
+      console.log("[generate-reel] No bg-music.mp3 found in templates/ — generating silent reel");
+      cmd
+        .complexFilter(videoFilter, "v")
+        .outputOptions(["-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p", "-s", "1080x1920"])
+        .output(outputPath)
+        .on("end", () => { console.log(`[generate-reel] Video: ${outputPath}`); resolve(); })
+        .on("error", (err: Error) => reject(err))
+        .run();
+    }
   });
 }
 
@@ -267,7 +287,9 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
-  // Upload reel + caption to Google Drive — appears on Android automatically
+  const caption = generateReelCaption(deals);
+
+  // Upload reel + caption to Google Drive — backup copy on Android
   try {
     const { uploadToGoogleDrive, uploadTextToGoogleDrive } = await import("./upload-drive");
     const today = new Date().toISOString().slice(0, 10);
@@ -278,10 +300,21 @@ export async function generateReel(): Promise<void> {
       console.log("[generate-reel] Google Drive link:", driveUrl);
     }
 
-    const caption = generateReelCaption(deals);
     await uploadTextToGoogleDrive(caption, `DealDrop_Caption_${today}.txt`);
   } catch (err) {
     console.warn("[generate-reel] Google Drive upload failed (reel still in artifact):", err);
+  }
+
+  // Upload to Cloudinary for a public URL, then auto-schedule on TryPost.it
+  try {
+    const { uploadVideoToCloudinary } = await import("./cloudinary");
+    const cloudinaryUrl = await uploadVideoToCloudinary(videoPath);
+    if (cloudinaryUrl) {
+      const { postReelToTryPost } = await import("./post-to-trypost");
+      await postReelToTryPost(cloudinaryUrl, caption);
+    }
+  } catch (err) {
+    console.warn("[generate-reel] TryPost.it auto-publish failed (reel still in Drive + artifact):", err);
   }
 
   await saveReelPost(deals);
