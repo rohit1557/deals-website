@@ -14,14 +14,15 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
     Accept: "application/json",
   };
 
-  // Schedule 5 minutes from now — gives TryPost time to process the video
-  const scheduledAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+  // Schedule 10 minutes from now — gives TryPost time to process the video
+  const scheduledAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
   const createRes = await fetch(`${TRYPOST_BASE}/api/posts`, {
     method: "POST",
     headers,
     body: JSON.stringify({
       content: caption,
+      status: "scheduled",
       scheduled_at: scheduledAt,
       platforms: [{ social_account_id: TRYPOST_SOCIAL_ACCOUNT_ID, content_type: "instagram_reel" }],
     }),
