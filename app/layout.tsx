@@ -34,9 +34,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Link>
 
             <nav className="hidden sm:flex items-center gap-6 text-sm font-medium">
-              <Link href="/"        className="text-gray-600 hover:text-blue-600 transition-colors">Deals</Link>
-              <Link href="/about"   className="text-gray-600 hover:text-blue-600 transition-colors">About</Link>
-              <Link href="/contact" className="text-gray-600 hover:text-blue-600 transition-colors">Contact</Link>
+              <Link href="/"             className="text-gray-600 hover:text-blue-600 transition-colors">Deals</Link>
+              <Link href="/india-deals"  className="text-gray-600 hover:text-orange-600 transition-colors flex items-center gap-1">🇮🇳 India</Link>
+              <Link href="/about"        className="text-gray-600 hover:text-blue-600 transition-colors">About</Link>
+              <Link href="/contact"      className="text-gray-600 hover:text-blue-600 transition-colors">Contact</Link>
             </nav>
 
             <div className="flex items-center gap-3">

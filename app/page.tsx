@@ -118,6 +118,29 @@ async function getTopDeals(country?: string): Promise<Deal[]> {
   })) as Deal[];
 }
 
+async function getIndiaDealsPick(): Promise<Deal[]> {
+  const rows = await db.deal.findMany({
+    where: {
+      isActive: true,
+      country: "IN",
+      discountPct: { gte: 20 },
+      OR: [
+        { source: "desidime" },
+        { source: "indiadeals" },
+        { source: "flipkart" },
+        { url: { contains: "amazon.in" } },
+      ],
+    },
+    orderBy: [{ votes: "desc" }, { discountPct: "desc" }, { createdAt: "desc" }],
+    take: 4,
+  });
+  return rows.map((d) => ({
+    ...d,
+    originalPrice: d.originalPrice ? Number(d.originalPrice) : null,
+    dealPrice:     d.dealPrice     ? Number(d.dealPrice)     : null,
+  })) as Deal[];
+}
+
 async function getEndingSoon(country?: string): Promise<Deal[]> {
   const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000); // next 24h
   const rows = await db.deal.findMany({
@@ -164,12 +187,13 @@ export default async function HomePage({ searchParams }: PageProps) {
   // country is a display mode, not a search filter — sections stay visible when it's set
   const isFiltered = !!(searchParams.q || searchParams.category);
 
-  const [{ deals, total }, stats, topDeals, endingSoon, allTimeLows] = await Promise.all([
+  const [{ deals, total }, stats, topDeals, endingSoon, allTimeLows, indiaDeals] = await Promise.all([
     getDeals(searchParams.q, searchParams.category, sort, page, limit, country),
     getSiteStats(country),
     isFiltered ? Promise.resolve([]) : getTopDeals(country),
     isFiltered ? Promise.resolve([]) : getEndingSoon(country),
     isFiltered ? Promise.resolve([]) : getAllTimeLows(country),
+    isFiltered ? Promise.resolve([]) : getIndiaDealsPick(),
   ]);
 
   return (
@@ -305,6 +329,39 @@ export default async function HomePage({ searchParams }: PageProps) {
             {allTimeLows.map((deal) => (
               <DealCard key={deal.id} deal={deal} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── 🇮🇳 India Deals — always visible, key differentiator ── */}
+      {!isFiltered && indiaDeals.length > 0 && (
+        <section className="rounded-3xl overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 via-white to-green-600 p-[3px] rounded-3xl">
+            <div className="bg-white rounded-[22px] p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🇮🇳</span>
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900">India Deals</h2>
+                    <p className="text-xs text-gray-500">Top picks from Flipkart, Amazon IN &amp; DesiDime</p>
+                  </div>
+                  <span className="hidden sm:inline text-xs font-semibold bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full">
+                    🛍️ Desi Picks
+                  </span>
+                </div>
+                <a
+                  href="/india-deals"
+                  className="text-sm font-bold text-orange-600 hover:text-orange-700 flex items-center gap-1 transition-colors"
+                >
+                  View all India deals →
+                </a>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {indiaDeals.map((deal) => (
+                  <DealCard key={deal.id} deal={deal} />
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       )}
