@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Zap } from "lucide-react";
 import DealCard from "@/components/DealCard";
 import TopDealSearch from "@/components/TopDealSearch";
@@ -11,6 +11,10 @@ interface TopDealSectionProps {
 
 export default function TopDealSection({ deals }: TopDealSectionProps) {
   const [filteredDeals, setFilteredDeals] = useState(deals);
+
+  useEffect(() => {
+    setFilteredDeals(deals);
+  }, [deals]);
 
   return (
     <section>
