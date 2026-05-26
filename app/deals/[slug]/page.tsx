@@ -58,12 +58,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const titleParts = [deal.title];
   if (discountStr) titleParts.push(discountStr);
   if (priceStr)    titleParts.push(priceStr);
-  const title = titleParts.join(" — ") + " | DealDrop";
+  const title = titleParts.join(" — ") + " | DealDrop AU";
 
   const description = [
     discountStr && priceStr
       ? `${deal.title} is ${discountStr} at ${priceStr}.`
-      : `${deal.title} — great deal spotted on DealDrop.`,
+      : `${deal.title} — great deal spotted on DealDrop AU.`,
     deal.description ? deal.description.slice(0, 120) : "",
     "Verified deal, updated automatically.",
   ].filter(Boolean).join(" ");

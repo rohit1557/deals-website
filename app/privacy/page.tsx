@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — DealDrop",
+  title: "Privacy Policy — DealDrop AU",
 };
 
 export default function PrivacyPage() {
