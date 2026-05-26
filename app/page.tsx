@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import DealCard from "@/components/DealCard";
 import SearchBar from "@/components/SearchBar";
 import CategoryFilter from "@/components/CategoryFilter";
+import DiscountFilter from "@/components/DiscountFilter";
 import SortSelector from "@/components/SortSelector";
 import Pagination from "@/components/Pagination";
 import TopDealSection from "@/components/TopDealSection";
@@ -13,7 +14,7 @@ import NewsletterSection from "@/components/NewsletterSection";
 import type { Deal } from "@/lib/types";
 
 interface PageProps {
-  searchParams: { q?: string; category?: string; sort?: string; page?: string; limit?: string; country?: string };
+  searchParams: { q?: string; category?: string; sort?: string; page?: string; limit?: string; country?: string; minDiscount?: string };
 }
 
 function getOrderBy(sort: string) {
@@ -33,11 +34,13 @@ async function getDeals(
   page = 1,
   limit = 24,
   country?: string,
+  minDiscount?: number,
 ): Promise<{ deals: Deal[]; total: number }> {
   const where = {
     isActive: true,
-    ...(category ? { category } : {}),
-    ...(country  ? { country }  : {}),
+    ...(category    ? { category }                           : {}),
+    ...(country     ? { country }                            : {}),
+    ...(minDiscount ? { discountPct: { gte: minDiscount } }  : {}),
     ...(search
       ? {
           OR: [
@@ -180,15 +183,16 @@ async function getAllTimeLows(country?: string): Promise<Deal[]> {
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
-  const page    = Math.max(1, parseInt(searchParams.page  ?? "1",  10));
-  const limit   = Math.min(96, Math.max(12, parseInt(searchParams.limit ?? "24", 10)));
-  const sort    = searchParams.sort    ?? "newest";
-  const country = searchParams.country;
+  const page        = Math.max(1, parseInt(searchParams.page  ?? "1",  10));
+  const limit       = Math.min(96, Math.max(12, parseInt(searchParams.limit ?? "24", 10)));
+  const sort        = searchParams.sort    ?? "newest";
+  const country     = searchParams.country;
+  const minDiscount = searchParams.minDiscount ? parseInt(searchParams.minDiscount, 10) : undefined;
   // country is a display mode, not a search filter — sections stay visible when it's set
-  const isFiltered = !!(searchParams.q || searchParams.category);
+  const isFiltered = !!(searchParams.q || searchParams.category || minDiscount);
 
   const [{ deals, total }, stats, topDeals, endingSoon, allTimeLows, indiaDeals] = await Promise.all([
-    getDeals(searchParams.q, searchParams.category, sort, page, limit, country),
+    getDeals(searchParams.q, searchParams.category, sort, page, limit, country, minDiscount),
     getSiteStats(country),
     isFiltered ? Promise.resolve([]) : getTopDeals(country),
     isFiltered ? Promise.resolve([]) : getEndingSoon(country),
@@ -255,13 +259,16 @@ export default async function HomePage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* ── Search + Sort ── */}
+      {/* ── Search + Sort + Discount Filter ── */}
       <div className="flex flex-col sm:flex-row gap-3">
         <Suspense>
           <SearchBar />
         </Suspense>
         <Suspense>
           <SortSelector current={sort} />
+        </Suspense>
+        <Suspense>
+          <DiscountFilter />
         </Suspense>
       </div>
 
