@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import ffmpeg from "fluent-ffmpeg";
 import { generateReelCaption, type WeeklyDeal } from "./generate-reel-caption";
+import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
+import { filterDeals } from "./filter-deals";
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -29,44 +31,28 @@ function truncateTitle(title: string): string {
 }
 
 async function fetchTopDeals(): Promise<WeeklyDeal[]> {
-  try {
-    const res = await fetch("http://localhost:3000/api/top-deals-weekly", {
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (res.ok) return (await res.json()).slice(0, 3);
-  } catch {
-    // fall through to direct DB
+  // Try CCC feed first, fall back to DB — both go through the shared
+  // filterDeals() which applies quality filters + daily-seeded rotation
+  let rawDeals = await fetchDeals();
+  let filtered = filterDeals(rawDeals, 3);
+
+  if (filtered.length < 3) {
+    console.log("[generate-reel] Not enough CCC deals, supplementing from DB...");
+    const dbDeals = await fetchDealsFromDB();
+    const combined = [...rawDeals, ...dbDeals.filter(d => !rawDeals.find(r => r.asin === d.asin))];
+    filtered = filterDeals(combined, 3);
   }
 
-  if (!DATABASE_URL) throw new Error("DATABASE_URL not set");
-
-  const { Client } = await import("pg");
-  const client = new Client({ connectionString: DATABASE_URL });
-  await client.connect();
-  try {
-    const result = await client.query(
-      `SELECT title, source, slug, discount_pct,
-              CAST(original_price AS float) AS original_price,
-              CAST(deal_price AS float) AS deal_price,
-              url, image_url
-       FROM deals
-       WHERE created_at > NOW() - INTERVAL '7 days'
-         AND is_active = true
-         AND category IN ('Tech','Gaming','Fashion','Beauty','Fragrance','Home','Kitchen')
-         AND url LIKE '%amazon.com.au%'
-         AND discount_pct >= 20
-         AND original_price > 0
-         AND deal_price > 0
-         AND deal_price BETWEEN 25 AND 500
-         AND deal_price < original_price
-       ORDER BY discount_pct DESC, created_at DESC
-       LIMIT 3`,
-      []
-    );
-    return result.rows;
-  } finally {
-    await client.end();
-  }
+  return filtered.map(d => ({
+    title:          d.title,
+    source:         "camelcamelcamel",
+    slug:           null,
+    discount_pct:   d.dropPct,
+    original_price: d.originalPrice,
+    deal_price:     d.dealPrice,
+    url:            d.amazonUrl,
+    image_url:      null,
+  }));
 }
 
 async function screenshotTemplate(
