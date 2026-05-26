@@ -267,7 +267,9 @@ export async function generateReel(): Promise<void> {
   const captionPath = path.join(outputDir, "reel-caption.txt");
   fs.writeFileSync(captionPath, generateReelCaption(deals));
 
-  // Upload reel + caption to Google Drive — appears on Android automatically
+  const caption = generateReelCaption(deals);
+
+  // Upload reel + caption to Google Drive — backup copy on Android
   try {
     const { uploadToGoogleDrive, uploadTextToGoogleDrive } = await import("./upload-drive");
     const today = new Date().toISOString().slice(0, 10);
@@ -278,10 +280,21 @@ export async function generateReel(): Promise<void> {
       console.log("[generate-reel] Google Drive link:", driveUrl);
     }
 
-    const caption = generateReelCaption(deals);
     await uploadTextToGoogleDrive(caption, `DealDrop_Caption_${today}.txt`);
   } catch (err) {
     console.warn("[generate-reel] Google Drive upload failed (reel still in artifact):", err);
+  }
+
+  // Upload to Cloudinary for a public URL, then auto-schedule on TryPost.it
+  try {
+    const { uploadVideoToCloudinary } = await import("./cloudinary");
+    const cloudinaryUrl = await uploadVideoToCloudinary(videoPath);
+    if (cloudinaryUrl) {
+      const { postReelToTryPost } = await import("./post-to-trypost");
+      await postReelToTryPost(cloudinaryUrl, caption);
+    }
+  } catch (err) {
+    console.warn("[generate-reel] TryPost.it auto-publish failed (reel still in Drive + artifact):", err);
   }
 
   await saveReelPost(deals);
