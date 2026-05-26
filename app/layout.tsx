@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import EmailPopup from "@/components/EmailPopup";
 import CountryToggle from "@/components/CountryToggle";
+import LastRefreshed from "@/components/LastRefreshed";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
               </span>
               <span className="text-xs text-gray-500 font-medium hidden sm:block">Live</span>
+              <LastRefreshed />
             </div>
           </div>
         </header>
