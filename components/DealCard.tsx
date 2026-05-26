@@ -185,10 +185,9 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
 
   const saveAmount = isPromo || hasInflatedRrp ? null : calculatedSavings;
 
-  const isHot          = !isPromo && discountPct != null && discountPct >= 50;
-  const isEnding       = !!deal.expiresAt &&
+  const isHot    = !isPromo && discountPct != null && discountPct >= 50;
+  const isEnding = !!deal.expiresAt &&
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
-  const isMaybeExpired = hoursAgo > 24 && !expired;
 
   // DesiDime engagement badges — based on community votes (hotness score)
   const votes = deal.votes ?? 0;
@@ -203,8 +202,9 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
   const insight     = dealInsight(deal, discountPct, saveAmount, isPromo);
   const sourceLabel = SOURCE_LABELS[(deal.source ?? "").toLowerCase()] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
-  const isStale = hoursAgo > 12;
-  const isOldDeal = hoursAgo > 24;
+  const isStale        = hoursAgo > 12;
+  const isOldDeal      = hoursAgo > 24;
+  const isMaybeExpired = hoursAgo > 24 && !expired;
 
   const ctaLabel = expired   ? "Expired"
     : isEnding               ? "Buy Now →"
