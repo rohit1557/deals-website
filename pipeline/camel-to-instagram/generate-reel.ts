@@ -51,7 +51,7 @@ async function fetchTopDeals(): Promise<WeeklyDeal[]> {
     original_price: d.originalPrice,
     deal_price:     d.dealPrice,
     url:            d.amazonUrl,
-    image_url:      null,
+    image_url:      d.imageUrl,
   }));
 }
 

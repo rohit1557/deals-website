@@ -18,6 +18,7 @@ export interface RawDeal {
   savingsAbs: number | null;   // absolute dollar savings, parsed from title
   pubDate: Date;
   description: string;
+  imageUrl: string | null;
 }
 
 function extractAsin(url: string): string | null {
@@ -97,6 +98,7 @@ async function fetchFeed(url: string): Promise<RawDeal[]> {
       savingsAbs,
       pubDate,
       description:   "",
+      imageUrl:      `https://images-na.ssl-images-amazon.com/images/P/${asin}.01.LZZZZZZZ.jpg`,
     });
   }
 
@@ -143,8 +145,9 @@ export async function fetchDealsFromDB(): Promise<RawDeal[]> {
     const { rows } = await client.query<{
       title: string; url: string; deal_price: string | null;
       original_price: string | null; discount_pct: number | null; created_at: Date;
+      image_url: string | null;
     }>(`
-      SELECT title, url, deal_price, original_price, discount_pct, created_at
+      SELECT title, url, deal_price, original_price, discount_pct, created_at, image_url
       FROM deals
       WHERE url LIKE '%amazon.com.au%'
         AND discount_pct >= 15
@@ -178,6 +181,7 @@ export async function fetchDealsFromDB(): Promise<RawDeal[]> {
         savingsAbs,
         pubDate:       row.created_at,
         description:   "",
+        imageUrl:      row.image_url ?? `https://images-na.ssl-images-amazon.com/images/P/${asin}.01.LZZZZZZZ.jpg`,
       });
     }
 
