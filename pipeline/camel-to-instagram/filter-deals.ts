@@ -6,11 +6,11 @@ const INSTAGRAM_CATEGORIES = ["Tech", "Gaming", "Fashion", "Beauty", "Home", "Ki
 // Products that look terrible on Instagram regardless of discount
 const SKIP_TITLE_RE = /\b(server\s*rack|rack\s*shelf|patch\s*panel|cable\s*manag|keystone|ethernet\s*switch|network\s*switch|patchbay|unmanaged\s*switch|managed\s*switch|sprayer|pressure\s*washer|lawn\s*mow|weed\s*killer|fertiliz|electric\s*motor|hydraulic|compressor|industrial|accounting|textbook|programming|software\s*engineering|business\s*analy|analysis\s*technique|reference\s*guide|handbook|rack\s*unit|rack\s*mount|data\s*center|pipe\s*fitting|plumbing|valve|gasket|floor\s*stand|music\s*stand)\b/i;
 
-const MIN_DROP_PCT     = 20;
-const MIN_SAVINGS_LOW  = 20;
-const MIN_SAVINGS_HIGH = 60;
-const MIN_DEAL_PRICE   = 25;
-const MAX_DEAL_PRICE   = 500;  // over $500 feels out of reach for impulse
+const MIN_DROP_PCT     = 15;
+const MIN_SAVINGS_LOW  = 15;
+const MIN_SAVINGS_HIGH = 50;
+const MIN_DEAL_PRICE   = 20;
+const MAX_DEAL_PRICE   = 600;
 const MAX_AGE_HOURS    = 48;
 
 export interface ScoredDeal extends RawDeal {
@@ -21,13 +21,13 @@ export interface ScoredDeal extends RawDeal {
 function guessCategory(title: string): string {
   const t = title.toLowerCase();
   if (/\b(perfume|cologne|fragrance|eau\s*de|toilette|parfum)\b/.test(t))                                                          return "Fragrance";
-  if (/\b(skincare|moistur|serum|lipstick|mascara|foundation|blush|concealer|shampoo|conditioner|hair\s*care|nail)\b/.test(t))     return "Beauty";
-  if (/\b(shirt|pants|dress|shoe|jacket|jeans|hoodie|sneaker|boot|sock|underwear|bra|legging|activewear|swimwear|watch)\b/.test(t)) return "Fashion";
-  if (/\b(game|gaming|controller|console|playstation|xbox|nintendo|steam|headset)\b/.test(t))                                      return "Gaming";
-  if (/\b(airpod|iphone|samsung|pixel|phone|laptop|tablet|headphone|earbud|speaker|camera|tv|monitor|keyboard|mouse|kindle|smart\s*watch|smartwatch|robot\s*vacuum|robot\s*mop)\b/.test(t)) return "Tech";
-  if (/\b(air\s*fryer|blender|coffee|nespresso|keurig|instant\s*pot|rice\s*cooker|toaster|mixer|food\s*processor)\b/.test(t))     return "Kitchen";
-  if (/\b(vacuum|mattress|pillow|bedsheet|towel|lamp|candle|diffuser|storage|organis|home\s*decor|cushion|throw)\b/.test(t))       return "Home";
-  if (/\b(luggage|backpack|travel|suitcase)\b/.test(t))                                                                            return "Travel";
+  if (/\b(skincare|moisturis|moisturiz|serum|lipstick|mascara|foundation|blush|concealer|shampoo|conditioner|hair\s*care|nail\s*polish|sunscreen|spf)\b/.test(t)) return "Beauty";
+  if (/\b(shirt|pants|dress|shoes?|jacket|jeans|hoodie|sneakers?|boots?|socks?|underwear|bra|leggings?|activewear|swimwear|watch|handbag|purse)\b/.test(t))        return "Fashion";
+  if (/\b(game|gaming|controller|console|playstation|xbox|nintendo|steam|headsets?|mechanical\s*keyboard|keycaps?|mousepad|gpu|graphics\s*card)\b/.test(t))        return "Gaming";
+  if (/\b(airpods?|iphone|samsung|pixel|phone|laptop|tablet|headphones?|earbuds?|earphones?|speaker|camera|\btv\b|monitor|keyboards?|mouse|mice|kindle|smart\s*watch|smartwatch|robot\s*vacuum|robot\s*mop|usb|ssd|hard\s*drive|charger|power\s*bank|drone|printer|router|wifi|pc\s*case|tower\s*case)\b/.test(t)) return "Tech";
+  if (/\b(air\s*fryer|blender|juicer|coffee|nespresso|keurig|instant\s*pot|rice\s*cooker|toaster|mixer|food\s*processor|kettle|microwave|stand\s*mixer)\b/.test(t)) return "Kitchen";
+  if (/\b(vacuum|mattress|pillow|bed\s*sheet|towel|lamp|candle|diffuser|storage|home\s*decor|cushion|throw|rug|curtain|bed\s*frame)\b/.test(t))                     return "Home";
+  if (/\b(luggage|backpack|travel|suitcase)\b/.test(t))                                                                                                             return "Travel";
   return "Other";
 }
 
