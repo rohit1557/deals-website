@@ -95,6 +95,7 @@ async function getTopDeals(country?: string): Promise<Deal[]> {
     // AU: strict 40–75% range to weed out fake RRP
     discountPct: { gte: isIndia ? 15 : 40, lte: isIndia ? 90 : 75 },
     country: country ?? "AU",
+    createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
   };
   // Fetch extra so we have headroom after filtering promo deals
   const rows = await db.deal.findMany({
