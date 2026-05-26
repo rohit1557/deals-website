@@ -151,9 +151,9 @@ export async function fetchDealsFromDB(): Promise<RawDeal[]> {
         AND discount_pct >= 20
         AND deal_price IS NOT NULL
         AND deal_price::numeric BETWEEN 25 AND 500
-        AND created_at > NOW() - INTERVAL '7 days'
+        AND created_at > NOW() - INTERVAL '48 hours'
       ORDER BY discount_pct DESC, created_at DESC
-      LIMIT 30
+      LIMIT 50
     `);
     await client.end();
 

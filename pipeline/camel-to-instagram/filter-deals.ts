@@ -63,6 +63,20 @@ function scoreDeal(deal: RawDeal): number {
   return score;
 }
 
+// Deterministic daily shuffle — same seed within a day, different each day.
+// Uses the date string as a seed so the reel rotates the pool without being
+// purely random (avoids picking low-quality deals by chance).
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const out = [...arr];
+  let s = seed;
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const j = Math.abs(s) % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
   const now = Date.now();
   const passed: RawDeal[] = [];
@@ -87,8 +101,17 @@ export function filterDeals(deals: RawDeal[], maxDeals = 5): ScoredDeal[] {
     console.log(`[filter] SKIP "${d.title.slice(0, 60)}" — ${reason}`);
   }
 
-  return passed
+  const scored = passed
     .map(d => ({ ...d, score: scoreDeal(d), category: guessCategory(d.title) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxDeals);
+    .sort((a, b) => b.score - a.score);
+
+  // Take top 2× pool so there are real candidates to rotate between,
+  // then shuffle with today's date as seed — rotates daily without sacrificing quality.
+  const pool = scored.slice(0, maxDeals * 2);
+  const today = new Date();
+  const daySeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const rotated = seededShuffle(pool, daySeed);
+
+  console.log(`[filter] pool=${pool.length} after quality filter, seed=${daySeed}`);
+  return rotated.slice(0, maxDeals);
 }
