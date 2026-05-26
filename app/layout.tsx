@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://dealdrop.au"),
-  title: "DealDrop — Great Deals in Australia & India",
+  title: "DealDrop AU — Real Deals from Amazon AU, OzBargain & India",
   description:
     "Real promo deals from Amazon AU, OzBargain, Flipkart and more. Updated every hour. Free, no signup needed.",
 };
@@ -56,6 +56,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </header>
+
+        {/* ── Affiliate disclosure bar ── */}
+        <div className="bg-blue-50 border-b border-blue-100 px-4 py-1.5 text-center">
+          <p className="text-xs text-blue-700">
+            💙 We earn a small commission on purchases — at no extra cost to you. That&apos;s how we keep DealDrop free.
+          </p>
+        </div>
 
         <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           {children}

@@ -185,9 +185,10 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
 
   const saveAmount = isPromo || hasInflatedRrp ? null : calculatedSavings;
 
-  const isHot    = !isPromo && discountPct != null && discountPct >= 50;
-  const isEnding = !!deal.expiresAt &&
+  const isHot          = !isPromo && discountPct != null && discountPct >= 50;
+  const isEnding       = !!deal.expiresAt &&
     (new Date(deal.expiresAt).getTime() - Date.now()) / 3_600_000 < 48 && !expired;
+  const isMaybeExpired = hoursAgo > 24 && !expired;
 
   // DesiDime engagement badges — based on community votes (hotness score)
   const votes = deal.votes ?? 0;
@@ -203,7 +204,7 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
   const sourceLabel = SOURCE_LABELS[(deal.source ?? "").toLowerCase()] ?? deal.source ?? "";
   const { hoursAgo, label: ageLabel } = listingAge(deal.createdAt);
   const isStale = hoursAgo > 12;
-  const isOldDeal = hoursAgo > 168; // >7 days (168 hours)
+  const isOldDeal = hoursAgo > 24;
 
   const ctaLabel = expired   ? "Expired"
     : isEnding               ? "Buy Now →"
@@ -219,9 +220,11 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
       className={`group flex flex-col rounded-2xl border bg-white overflow-hidden transition-all duration-200 ${
         expired
           ? "opacity-50 cursor-not-allowed border-gray-100 shadow-sm"
-          : isHot
-            ? "border-red-100 shadow-sm hover:shadow-xl hover:shadow-red-500/10 hover:-translate-y-1 hover:border-red-200 cursor-pointer"
-            : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 cursor-pointer"
+          : isMaybeExpired
+            ? "opacity-70 border-gray-200 shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:opacity-90 cursor-pointer"
+            : isHot
+              ? "border-red-100 shadow-sm hover:shadow-xl hover:shadow-red-500/10 hover:-translate-y-1 hover:border-red-200 cursor-pointer"
+              : "border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-100 cursor-pointer"
       }`}
     >
       {/* Image / placeholder — fallback chain: scraped imageUrl → ogImage → category emoji + gradient */}
@@ -335,7 +338,7 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
         ) : isOldDeal && !expired ? (
           <div className="absolute top-3 left-3 flex items-center gap-1 bg-gray-400 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md">
             <Clock className="h-2.5 w-2.5" />
-            OLD DEAL
+            MAY BE EXPIRED
           </div>
         ) : null}
       </div>
@@ -411,7 +414,12 @@ export default function DealCard({ deal, trending, featured }: { deal: Deal; tre
             </p>
           )}
 
-          {isStale && !discountVerified && deal.source !== "camelcamelcamel" && !expired && (
+          {isMaybeExpired && !discountVerified && deal.source !== "camelcamelcamel" && !expired && (
+            <p className="text-[10px] text-gray-500 bg-gray-50 rounded-lg px-2 py-1 leading-snug">
+              Listed {ageLabel} — price may have changed. Verify on retailer site.
+            </p>
+          )}
+          {isStale && !isMaybeExpired && !discountVerified && deal.source !== "camelcamelcamel" && !expired && (
             <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 leading-snug">
               Listed {ageLabel} — verify current price on retailer site.
             </p>
