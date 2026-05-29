@@ -14,15 +14,15 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
     Accept: "application/json",
   };
 
-  // Schedule 10 minutes from now — gives TryPost time to process the video
-  const scheduledAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  // Schedule 15 minutes from now — gives TryPost time to process the video
+  const scheduledAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
+  // Step 1: Create post as draft first
   const createRes = await fetch(`${TRYPOST_BASE}/api/posts`, {
     method: "POST",
     headers,
     body: JSON.stringify({
       content: caption,
-      status: "scheduled",
       scheduled_at: scheduledAt,
       platforms: [{ social_account_id: TRYPOST_SOCIAL_ACCOUNT_ID, content_type: "instagram_reel" }],
     }),
@@ -33,9 +33,10 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
     throw new Error(`[trypost] Create post failed: ${createRes.status} ${await createRes.text()}`);
   }
 
-  const post = (await createRes.json()) as { id: string };
-  console.log(`[trypost] Post created: ${post.id}`);
+  const post = (await createRes.json()) as { id: string; status?: string };
+  console.log(`[trypost] Post created: ${post.id} (status: ${post.status})`);
 
+  // Step 2: Attach media
   const mediaRes = await fetch(`${TRYPOST_BASE}/api/posts/${post.id}/media/from-url`, {
     method: "POST",
     headers,
@@ -47,5 +48,23 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
     throw new Error(`[trypost] Attach media failed: ${mediaRes.status} ${await mediaRes.text()}`);
   }
 
-  console.log(`[trypost] Reel scheduled for ${scheduledAt} on @audealdrop`);
+  const mediaBody = await mediaRes.json().catch(() => ({}));
+  console.log(`[trypost] Media attached (status: ${(mediaBody as any)?.status ?? "unknown"})`);
+
+  // Step 3: Explicitly set status to scheduled (media attachment may reset it to draft)
+  const scheduleRes = await fetch(`${TRYPOST_BASE}/api/posts/${post.id}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ status: "scheduled", scheduled_at: scheduledAt }),
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  if (!scheduleRes.ok) {
+    const body = await scheduleRes.text();
+    console.warn(`[trypost] PATCH status failed (${scheduleRes.status}): ${body}`);
+    // Not fatal — post exists, just may stay as draft
+  } else {
+    const schedBody = (await scheduleRes.json()) as { status?: string };
+    console.log(`[trypost] Reel scheduled for ${scheduledAt} — status: ${schedBody.status}`);
+  }
 }
