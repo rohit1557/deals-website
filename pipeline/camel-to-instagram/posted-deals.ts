@@ -7,8 +7,13 @@ import { Client } from "pg";
 async function getClient(): Promise<Client | null> {
   if (!process.env.DATABASE_URL) return null;
   const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
-  return client;
+  try {
+    await client.connect();
+    return client;
+  } catch (err: any) {
+    console.warn("[posted-deals] DB unavailable, skipping:", err?.message ?? err);
+    return null;
+  }
 }
 
 async function ensureTable(client: Client): Promise<void> {
