@@ -51,11 +51,16 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
   const mediaBody = await mediaRes.json().catch(() => ({}));
   console.log(`[trypost] Media attached (status: ${(mediaBody as any)?.status ?? "unknown"})`);
 
-  // Step 3: Explicitly set status to scheduled (media attachment may reset it to draft)
+  // Step 3: PUT to set status=scheduled (PATCH not supported; media attachment resets to draft)
   const scheduleRes = await fetch(`${TRYPOST_BASE}/api/posts/${post.id}`, {
-    method: "PATCH",
+    method: "PUT",
     headers,
-    body: JSON.stringify({ status: "scheduled", scheduled_at: scheduledAt }),
+    body: JSON.stringify({
+      content: caption,
+      status: "scheduled",
+      scheduled_at: scheduledAt,
+      platforms: [{ social_account_id: TRYPOST_SOCIAL_ACCOUNT_ID, content_type: "instagram_reel" }],
+    }),
     signal: AbortSignal.timeout(15_000),
   });
 
