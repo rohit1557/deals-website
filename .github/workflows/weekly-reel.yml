@@ -23,14 +23,13 @@ jobs:
           cache: "npm"
           cache-dependency-path: pipeline/camel-to-instagram/package.json
 
-      - name: Install FFmpeg
-        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg google-chrome-stable
 
       - name: Install dependencies
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
         run: npm install
-
-      - name: Install Puppeteer browser
-        run: rm -rf ~/.cache/puppeteer/chrome && npx puppeteer browsers install chrome
 
       - name: Download background music
         continue-on-error: true
@@ -45,6 +44,7 @@ jobs:
 
       - name: Generate reel
         env:
+          PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
