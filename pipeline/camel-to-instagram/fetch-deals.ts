@@ -150,12 +150,11 @@ export async function fetchDealsFromDB(): Promise<RawDeal[]> {
       SELECT title, url, deal_price, original_price, discount_pct, created_at, image_url
       FROM deals
       WHERE url LIKE '%amazon.com.au%'
-        AND discount_pct >= 15
+        AND discount_pct >= 8
         AND deal_price IS NOT NULL
-        AND deal_price::numeric BETWEEN 20 AND 600
-        AND created_at > NOW() - INTERVAL '48 hours'
+        AND created_at > NOW() - INTERVAL '24 hours'
       ORDER BY discount_pct DESC, created_at DESC
-      LIMIT 80
+      LIMIT 30
     `);
     await client.end();
 

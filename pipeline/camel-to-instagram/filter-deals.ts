@@ -6,9 +6,9 @@ const INSTAGRAM_CATEGORIES = ["Tech", "Gaming", "Fashion", "Beauty", "Home", "Ki
 // Products that look terrible on Instagram regardless of discount
 const SKIP_TITLE_RE = /\b(server\s*rack|rack\s*shelf|patch\s*panel|cable\s*manag|keystone|ethernet\s*switch|network\s*switch|patchbay|unmanaged\s*switch|managed\s*switch|sprayer|pressure\s*washer|lawn\s*mow|weed\s*killer|fertiliz|electric\s*motor|hydraulic|compressor|industrial|accounting|textbook|programming|software\s*engineering|business\s*analy|analysis\s*technique|reference\s*guide|handbook|rack\s*unit|rack\s*mount|data\s*center|pipe\s*fitting|plumbing|valve|gasket|floor\s*stand|music\s*stand)\b/i;
 
-const MIN_DROP_PCT     = 15;
-const MIN_SAVINGS_LOW  = 15;
-const MIN_SAVINGS_HIGH = 50;
+const MIN_DROP_PCT     = 8;
+const MIN_SAVINGS_LOW  = 10;
+const MIN_SAVINGS_HIGH = 40;
 const MIN_DEAL_PRICE   = 20;
 const MAX_DEAL_PRICE   = 600;
 const MAX_AGE_HOURS    = 48;

@@ -310,7 +310,8 @@ export async function generateReel(): Promise<void> {
 
 if (require.main === module) {
   generateReel().catch((err) => {
-    console.error("[generate-reel] Fatal error:", err);
-    process.exit(1);
+    // Exit 0 so the workflow step doesn't fail the whole job — reel is optional
+    console.warn("[generate-reel] Skipping reel:", err?.message ?? err);
+    process.exit(0);
   });
 }
