@@ -9,6 +9,7 @@ import { generateImage } from "./generate-image";
 import { uploadAndPost } from "./post-to-instagram";
 import { postToBuffer } from "./post-to-buffer";
 import { filterUnposted, markPosted, setLatestDealUrl, recordInstagramPost } from "./posted-deals";
+import { postToOzBargain } from "./post-to-ozbargain";
 
 const AUTO_POST_INSTAGRAM = process.env.POST_TO_INSTAGRAM === "true";
 const AUTO_POST_BUFFER    = process.env.POST_TO_BUFFER    === "true";
@@ -115,6 +116,17 @@ async function main() {
   ].join("\n"), "utf-8");
 
   console.log(`[pipeline] Captions written to ${captionsFile}`);
+
+  // Post best deal to OzBargain (top deal only, 20%+ discount, non-Other category)
+  const ozbDeal = topDeals.find(d => (d.dropPct ?? 0) >= 20 && d.category !== "Other") ?? topDeals[0];
+  if (ozbDeal) {
+    try {
+      const ozbUrl = await postToOzBargain(ozbDeal);
+      if (ozbUrl) console.log(`[pipeline] OzBargain post live: ${ozbUrl}`);
+    } catch (err: any) {
+      console.warn(`[pipeline] OzBargain post failed (non-fatal): ${err?.message ?? err}`);
+    }
+  }
 
   const shouldRecord = AUTO_POST_INSTAGRAM || AUTO_POST_BUFFER;
 
