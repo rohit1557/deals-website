@@ -85,7 +85,7 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     // ── Step 1: Restore session via cookies ────────────────────────────────
     // Navigate to domain first so cookies can be set
     await page.goto(`${OZB_BASE}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
-    await page.setCookie(...(cookies as Parameters<typeof page.setCookie>));
+    await page.setCookie(...(cookies as unknown as Parameters<typeof page.setCookie>));
 
     // Verify session is valid by checking for a logged-in indicator
     await page.goto(`${OZB_BASE}/`, { waitUntil: "networkidle0", timeout: 30_000 });
