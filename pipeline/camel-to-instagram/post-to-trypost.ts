@@ -33,8 +33,11 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
     throw new Error(`[trypost] Create post failed: ${createRes.status} ${await createRes.text()}`);
   }
 
-  const post = (await createRes.json()) as { id: string; status?: string };
+  const post = (await createRes.json()) as { id: string; status?: string; platforms?: { id: string }[] };
   console.log(`[trypost] Post created: ${post.id} (status: ${post.status})`);
+
+  // Capture the server-assigned platform record ID — required in the PUT payload
+  const platformId = post.platforms?.[0]?.id;
 
   // Step 2: Attach media
   const mediaRes = await fetch(`${TRYPOST_BASE}/api/posts/${post.id}/media/from-url`, {
@@ -51,7 +54,14 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
   const mediaBody = await mediaRes.json().catch(() => ({}));
   console.log(`[trypost] Media attached (status: ${(mediaBody as any)?.status ?? "unknown"})`);
 
-  // Step 3: PUT to set status=scheduled (PATCH not supported; media attachment resets to draft)
+  // Step 3: PUT to set status=scheduled (media attachment resets status to draft)
+  // platforms[0].id is the server-assigned record ID — required by TryPost's PUT endpoint
+  const platformPayload: Record<string, string> = {
+    social_account_id: TRYPOST_SOCIAL_ACCOUNT_ID,
+    content_type: "instagram_reel",
+  };
+  if (platformId) platformPayload.id = platformId;
+
   const scheduleRes = await fetch(`${TRYPOST_BASE}/api/posts/${post.id}`, {
     method: "PUT",
     headers,
@@ -59,14 +69,14 @@ export async function postReelToTryPost(videoUrl: string, caption: string): Prom
       content: caption,
       status: "scheduled",
       scheduled_at: scheduledAt,
-      platforms: [{ social_account_id: TRYPOST_SOCIAL_ACCOUNT_ID, content_type: "instagram_reel" }],
+      platforms: [platformPayload],
     }),
     signal: AbortSignal.timeout(15_000),
   });
 
   if (!scheduleRes.ok) {
     const body = await scheduleRes.text();
-    console.warn(`[trypost] PATCH status failed (${scheduleRes.status}): ${body}`);
+    console.warn(`[trypost] PUT status failed (${scheduleRes.status}): ${body}`);
     // Not fatal — post exists, just may stay as draft
   } else {
     const schedBody = (await scheduleRes.json()) as { status?: string };
