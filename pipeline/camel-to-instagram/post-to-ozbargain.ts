@@ -97,18 +97,15 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     await page.goto(`${OZB_BASE}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
     await page.setCookie(...(cookies as unknown as Parameters<typeof page.setCookie>));
 
-    // Verify session is valid by checking for a logged-in indicator
-    await page.goto(`${OZB_BASE}/`, { waitUntil: "networkidle0", timeout: 30_000 });
-    const loggedIn = await page.$("a[href*='/user/logout'], .username, #edit-account");
-    if (!loggedIn) {
-      throw new Error("OzBargain session expired — refresh OZBARGAIN_COOKIES secret");
-    }
-    console.log("[ozbargain] Session restored from cookies");
-
-    // ── Step 2: Navigate to submit form ───────────────────────────────────
+    // Navigate directly to the submit form — if session is valid it loads, otherwise redirects to login
     await page.goto(`${OZB_BASE}/node/add/bargain`, { waitUntil: "networkidle0", timeout: 30_000 });
+    const finalUrl = page.url();
+    if (finalUrl.includes("/user/login") || finalUrl.includes("/user/register")) {
+      throw new Error("OzBargain session expired or IP-blocked — refresh OZBARGAIN_COOKIES secret");
+    }
+    console.log(`[ozbargain] Session valid, on form page: ${finalUrl}`);
 
-    // ── Step 3: Fill title ────────────────────────────────────────────────
+    // ── Step 2: Fill title ────────────────────────────────────────────────
     const cleanTitle = deal.title.length > 100 ? deal.title.slice(0, 97) + "…" : deal.title;
     const titleWithPrice = deal.dealPrice
       ? `${cleanTitle} - ${formatAUD(deal.dealPrice)}${deal.dropPct ? ` (${deal.dropPct}% off)` : ""}`
