@@ -105,43 +105,50 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     }
     console.log(`[ozbargain] Session valid, on form page: ${finalUrl}`);
 
-    // ── Step 2: Fill title ────────────────────────────────────────────────
+    // ── Step 2: Dump form fields for debugging, then fill ─────────────────
+    // Log all input/textarea/select names so we can see the real field IDs
+    const formFields = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("input, textarea, select"))
+        .map(el => ({ tag: el.tagName, id: el.id, name: (el as HTMLInputElement).name, type: (el as HTMLInputElement).type }))
+        .filter(f => f.id || f.name)
+    );
+    console.log("[ozbargain] Form fields:", JSON.stringify(formFields.slice(0, 30)));
+
     const cleanTitle = deal.title.length > 100 ? deal.title.slice(0, 97) + "…" : deal.title;
     const titleWithPrice = deal.dealPrice
       ? `${cleanTitle} - ${formatAUD(deal.dealPrice)}${deal.dropPct ? ` (${deal.dropPct}% off)` : ""}`
       : cleanTitle;
-    await page.waitForSelector("#edit-title", { timeout: 10_000 });
-    await page.type("#edit-title", titleWithPrice.slice(0, 120), { delay: 30 });
+    // Try multiple selectors for the title field
+    const titleSel = await page.$("input#edit-title, input[name='title'], input[id*='title']");
+    if (!titleSel) throw new Error("Could not find title field on OzBargain form");
+    await titleSel.click({ clickCount: 3 });
+    await titleSel.type(titleWithPrice.slice(0, 120), { delay: 30 });
 
-    // ── Step 4: Fill deal URL ─────────────────────────────────────────────
-    const urlField = await page.$("#edit-field-url-und-0-url");
-    if (urlField) {
-      await urlField.type(deal.amazonUrl, { delay: 20 });
-    } else {
-      // Fallback: try name attribute selector
-      const alt = await page.$('input[name="field_url[und][0][url]"]');
-      if (alt) await alt.type(deal.amazonUrl, { delay: 20 });
-    }
+    // ── Step 3: Fill deal URL ─────────────────────────────────────────────
+    const urlField = await page.$(
+      "#edit-field-url-und-0-url, input[name='field_url[und][0][url]'], input[id*='field-url']"
+    );
+    if (urlField) await urlField.type(deal.amazonUrl, { delay: 20 });
 
-    // ── Step 5: Fill description ──────────────────────────────────────────
+    // ── Step 4: Fill description ──────────────────────────────────────────
     const desc = buildDescription(deal);
-    const bodyField = await page.$("textarea#edit-body-und-0-value");
+    const bodyField = await page.$("textarea#edit-body-und-0-value, textarea[name*='body'], textarea[id*='body']");
     if (bodyField) {
       await bodyField.click();
       await bodyField.type(desc, { delay: 5 });
     }
 
-    // ── Step 6: Fill price fields ─────────────────────────────────────────
+    // ── Step 5: Fill price fields ─────────────────────────────────────────
     if (deal.dealPrice) {
       const priceField = await page.$(
-        "#edit-field-price-und-0-value, input[name='field_price[und][0][value]']"
+        "#edit-field-price-und-0-value, input[name='field_price[und][0][value]'], input[id*='field-price'][id*='value']"
       );
       if (priceField) await priceField.type(String(deal.dealPrice.toFixed(2)), { delay: 20 });
     }
 
     if (deal.originalPrice) {
       const wasField = await page.$(
-        "#edit-field-price-und-0-was, input[name='field_price[und][0][was]']"
+        "#edit-field-price-und-0-was, input[name='field_price[und][0][was]'], input[id*='field-price'][id*='was']"
       );
       if (wasField) await wasField.type(String(deal.originalPrice.toFixed(2)), { delay: 20 });
     }
