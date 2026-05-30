@@ -51,11 +51,21 @@ function buildDescription(deal: ScoredDeal): string {
 }
 
 export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> {
-  const username = process.env.OZBARGAIN_USERNAME;
-  const password = process.env.OZBARGAIN_PASSWORD;
+  // OZBARGAIN_COOKIES: JSON array of cookie objects exported from browser after Google login.
+  // Export with DevTools: Application → Cookies → copy all ozbargain.com.au cookies as JSON.
+  // Or use the "Cookie-Editor" Chrome extension → Export → JSON → paste into secret.
+  const cookiesJson = process.env.OZBARGAIN_COOKIES;
 
-  if (!username || !password) {
-    console.warn("[ozbargain] OZBARGAIN_USERNAME/PASSWORD not set — skipping");
+  if (!cookiesJson) {
+    console.warn("[ozbargain] OZBARGAIN_COOKIES not set — skipping");
+    return null;
+  }
+
+  let cookies: Array<Record<string, unknown>>;
+  try {
+    cookies = JSON.parse(cookiesJson);
+  } catch {
+    console.warn("[ozbargain] OZBARGAIN_COOKIES is not valid JSON — skipping");
     return null;
   }
 
@@ -72,24 +82,18 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     );
     await page.setViewport({ width: 1280, height: 900 });
 
-    // ── Step 1: Login ──────────────────────────────────────────────────────
-    console.log("[ozbargain] Logging in...");
-    await page.goto(`${OZB_BASE}/user/login`, { waitUntil: "networkidle0", timeout: 30_000 });
+    // ── Step 1: Restore session via cookies ────────────────────────────────
+    // Navigate to domain first so cookies can be set
+    await page.goto(`${OZB_BASE}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await page.setCookie(...(cookies as Parameters<typeof page.setCookie>));
 
-    await page.type("#edit-name", username, { delay: 40 });
-    await page.type("#edit-pass", password, { delay: 40 });
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: "networkidle0", timeout: 30_000 }),
-      page.click("#edit-submit"),
-    ]);
-
-    // Verify login succeeded
-    const loginError = await page.$(".messages.error");
-    if (loginError) {
-      const errText = await page.evaluate(el => el?.textContent ?? "", loginError);
-      throw new Error(`OzBargain login failed: ${errText.trim()}`);
+    // Verify session is valid by checking for a logged-in indicator
+    await page.goto(`${OZB_BASE}/`, { waitUntil: "networkidle0", timeout: 30_000 });
+    const loggedIn = await page.$("a[href*='/user/logout'], .username, #edit-account");
+    if (!loggedIn) {
+      throw new Error("OzBargain session expired — refresh OZBARGAIN_COOKIES secret");
     }
-    console.log("[ozbargain] Logged in");
+    console.log("[ozbargain] Session restored from cookies");
 
     // ── Step 2: Navigate to submit form ───────────────────────────────────
     await page.goto(`${OZB_BASE}/node/add/bargain`, { waitUntil: "networkidle0", timeout: 30_000 });
