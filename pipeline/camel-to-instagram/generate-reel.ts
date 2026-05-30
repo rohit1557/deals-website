@@ -7,6 +7,7 @@ import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
 import { filterDeals } from "./filter-deals";
 
 const DATABASE_URL = process.env.DATABASE_URL;
+const DRY_RUN = process.env.DRY_RUN === "true";
 
 const HOOK_DURATION = 1.5;
 const DEAL_DURATION = 4;
@@ -310,7 +311,9 @@ export async function generateReel(): Promise<void> {
     } catch { /* ignore — if DB check fails, allow posting */ }
   }
 
-  if (alreadyPostedToday) {
+  if (DRY_RUN) {
+    console.log("[generate-reel] DRY_RUN=true — skipping Cloudinary upload and TryPost scheduling");
+  } else if (alreadyPostedToday) {
     console.log(`[generate-reel] Reel already posted today (${todayAEST}) — skipping TryPost`);
   } else {
     try {
