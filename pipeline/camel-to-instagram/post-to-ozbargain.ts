@@ -105,8 +105,11 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     }
     console.log(`[ozbargain] Session valid, on form page: ${finalUrl}`);
 
-    // ── Step 2: Dump form fields for debugging, then fill ─────────────────
-    // Log all input/textarea/select names so we can see the real field IDs
+    // ── Step 2: Dump page state for debugging ─────────────────────────────
+    const pageTitle = await page.title();
+    const pageHtmlSnippet = await page.evaluate(() => document.body?.innerHTML?.slice(0, 500) ?? "");
+    console.log(`[ozbargain] Page title: "${pageTitle}"`);
+    console.log(`[ozbargain] Body snippet: ${pageHtmlSnippet}`);
     const formFields = await page.evaluate(() =>
       Array.from(document.querySelectorAll("input, textarea, select"))
         .map(el => ({ tag: el.tagName, id: el.id, name: (el as HTMLInputElement).name, type: (el as HTMLInputElement).type }))
