@@ -106,13 +106,17 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     await page.goto(`${OZB_BASE}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
     await page.setCookie(...(cookies as unknown as Parameters<typeof page.setCookie>));
 
-    // Navigate directly to the submit form — if session is valid it loads, otherwise redirects to login
-    await page.goto(`${OZB_BASE}/node/add/bargain`, { waitUntil: "networkidle0", timeout: 30_000 });
+    // Navigate to the submit form — give extra time for Cloudflare JS challenge to resolve
+    await page.goto(`${OZB_BASE}/node/add/bargain`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await new Promise(r => setTimeout(r, 4000)); // wait for CF JS challenge + page render
     const finalUrl = page.url();
-    if (finalUrl.includes("/user/login") || finalUrl.includes("/user/register")) {
-      throw new Error("OzBargain session expired or IP-blocked — refresh OZBARGAIN_COOKIES secret");
+    const pageTitle = await page.title();
+    const bodyText = await page.evaluate(() => (document.body?.innerText ?? "").slice(0, 300));
+    console.log(`[ozbargain] URL: ${finalUrl} | Title: "${pageTitle}"`);
+    console.log(`[ozbargain] Body: ${bodyText.replace(/\s+/g, " ")}`);
+    if (finalUrl.includes("/user/login") || finalUrl.includes("/user/register") || pageTitle.includes("Cloudflare") || pageTitle.includes("Attention")) {
+      throw new Error(`OzBargain blocked or session expired (title: "${pageTitle}")`);
     }
-    console.log(`[ozbargain] Session valid, on form page: ${finalUrl}`);
 
     // Wait for form to be interactive, then dump fields
     await page.waitForSelector("form", { timeout: 10_000 });
