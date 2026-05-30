@@ -293,15 +293,36 @@ export async function generateReel(): Promise<void> {
   }
 
   // Upload to Cloudinary for a public URL, then auto-schedule on TryPost.it
-  try {
-    const { uploadVideoToCloudinary } = await import("./cloudinary");
-    const cloudinaryUrl = await uploadVideoToCloudinary(videoPath);
-    if (cloudinaryUrl) {
-      const { postReelToTryPost } = await import("./post-to-trypost");
-      await postReelToTryPost(cloudinaryUrl, caption);
+  // Guard: skip TryPost if a reel was already scheduled today (prevents duplicate posts from re-runs)
+  const todayAEST = new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Sydney" }); // YYYY-MM-DD
+  let alreadyPostedToday = false;
+  if (DATABASE_URL) {
+    try {
+      const { Client } = await import("pg");
+      const pg = new Client({ connectionString: DATABASE_URL });
+      await pg.connect();
+      const { rows } = await pg.query(
+        "SELECT 1 FROM reel_posts WHERE date = $1 LIMIT 1",
+        [todayAEST]
+      );
+      alreadyPostedToday = rows.length > 0;
+      await pg.end();
+    } catch { /* ignore — if DB check fails, allow posting */ }
+  }
+
+  if (alreadyPostedToday) {
+    console.log(`[generate-reel] Reel already posted today (${todayAEST}) — skipping TryPost`);
+  } else {
+    try {
+      const { uploadVideoToCloudinary } = await import("./cloudinary");
+      const cloudinaryUrl = await uploadVideoToCloudinary(videoPath);
+      if (cloudinaryUrl) {
+        const { postReelToTryPost } = await import("./post-to-trypost");
+        await postReelToTryPost(cloudinaryUrl, caption);
+      }
+    } catch (err) {
+      console.warn("[generate-reel] TryPost.it auto-publish failed (reel still in Drive + artifact):", err);
     }
-  } catch (err) {
-    console.warn("[generate-reel] TryPost.it auto-publish failed (reel still in Drive + artifact):", err);
   }
 
   await saveReelPost(deals);
