@@ -114,6 +114,15 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     }
     console.log(`[ozbargain] Session valid, on form page: ${finalUrl}`);
 
+    // Wait for form to be interactive, then dump fields
+    await page.waitForSelector("form", { timeout: 10_000 });
+    const formFields = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("input, textarea, select"))
+        .map((el) => ({ id: (el as HTMLInputElement).id, name: (el as HTMLInputElement).name, type: (el as HTMLInputElement).type }))
+        .filter(f => f.id || f.name)
+    );
+    console.log("[ozbargain] Fields on form:", JSON.stringify(formFields.slice(0, 20)));
+
     const cleanTitle = deal.title.length > 100 ? deal.title.slice(0, 97) + "…" : deal.title;
     const titleWithPrice = deal.dealPrice
       ? `${cleanTitle} - ${formatAUD(deal.dealPrice)}${deal.dropPct ? ` (${deal.dropPct}% off)` : ""}`
