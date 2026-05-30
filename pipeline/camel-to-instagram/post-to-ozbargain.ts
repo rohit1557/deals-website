@@ -63,7 +63,17 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
 
   let cookies: Array<Record<string, unknown>>;
   try {
-    cookies = JSON.parse(cookiesJson);
+    const raw: Array<Record<string, unknown>> = JSON.parse(cookiesJson);
+    // Puppeteer's setCookie requires sameSite to be a string or absent — drop null values
+    // and skip session-only cookies (no expirationDate) that won't survive across requests
+    cookies = raw.map(c => {
+      const clean: Record<string, unknown> = { ...c };
+      if (clean.sameSite === null || clean.sameSite === "no_restriction") {
+        delete clean.sameSite; // Puppeteer doesn't accept null or non-standard values
+      }
+      if (clean.storeId === null) delete clean.storeId;
+      return clean;
+    });
   } catch {
     console.warn("[ozbargain] OZBARGAIN_COOKIES is not valid JSON — skipping");
     return null;
