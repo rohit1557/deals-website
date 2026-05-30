@@ -159,7 +159,7 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
       await page.select("select[name='tid']", ozbCategory);
     } catch {
       // Some versions use a different field name — try by visible option text
-      await page.evaluate((cat) => {
+      await page.evaluate((cat: string) => {
         const sel = document.querySelector("select[name='tid']") as HTMLSelectElement | null;
         if (!sel) return;
         for (const opt of Array.from(sel.options)) {
@@ -186,7 +186,7 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     // Check for validation errors
     const errorEl = await page.$(".messages.error");
     if (errorEl) {
-      const errText = await page.evaluate(el => el?.textContent ?? "", errorEl);
+      const errText = await page.evaluate((el: Element) => el?.textContent ?? "", errorEl);
       throw new Error(`OzBargain submission error: ${errText.trim().slice(0, 200)}`);
     }
 
