@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "All deals featured on DealDrop AU's Instagram, updated daily. Best Amazon AU price drops.",
 };
 
-export const revalidate = 0;
+export const revalidate = 1800;
 
 const AFFILIATE_TAG = "dealdrop0d5-22";
 

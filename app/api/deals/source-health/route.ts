@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-export const revalidate = 60; // Cache for 60 seconds
+export const revalidate = 3600; // internal admin endpoint — hourly is plenty
 
 interface SourceHealth {
   source: string;
