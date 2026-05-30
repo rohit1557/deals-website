@@ -13,7 +13,9 @@
     "fluent-ffmpeg": "^2.1.3",
     "googleapis": "^172.0.0",
     "pg": "^8.12.0",
-    "puppeteer": "^22.0.0"
+    "puppeteer": "^22.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.24",

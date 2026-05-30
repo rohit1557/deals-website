@@ -1,5 +1,9 @@
-import puppeteer from "puppeteer";
+import puppeteerExtra from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import type { ScoredDeal } from "./filter-deals";
+
+// Stealth plugin spoofs headless-browser fingerprints that Cloudflare detects
+puppeteerExtra.use(StealthPlugin());
 
 const OZB_BASE = "https://www.ozbargain.com.au";
 
@@ -79,10 +83,15 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     return null;
   }
 
-  const browser = await puppeteer.launch({
+  // Optional residential proxy — set OZBARGAIN_PROXY=http://user:pass@host:port
+  const proxy = process.env.OZBARGAIN_PROXY;
+  const args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
+  if (proxy) args.push(`--proxy-server=${proxy}`);
+
+  const browser = await (puppeteerExtra as any).launch({
     headless: true,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    args,
   });
 
   try {
@@ -104,18 +113,6 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
       throw new Error("OzBargain session expired or IP-blocked — refresh OZBARGAIN_COOKIES secret");
     }
     console.log(`[ozbargain] Session valid, on form page: ${finalUrl}`);
-
-    // ── Step 2: Dump page state for debugging ─────────────────────────────
-    const pageTitle = await page.title();
-    const pageHtmlSnippet = await page.evaluate(() => document.body?.innerHTML?.slice(0, 500) ?? "");
-    console.log(`[ozbargain] Page title: "${pageTitle}"`);
-    console.log(`[ozbargain] Body snippet: ${pageHtmlSnippet}`);
-    const formFields = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("input, textarea, select"))
-        .map(el => ({ tag: el.tagName, id: el.id, name: (el as HTMLInputElement).name, type: (el as HTMLInputElement).type }))
-        .filter(f => f.id || f.name)
-    );
-    console.log("[ozbargain] Form fields:", JSON.stringify(formFields.slice(0, 30)));
 
     const cleanTitle = deal.title.length > 100 ? deal.title.slice(0, 97) + "…" : deal.title;
     const titleWithPrice = deal.dealPrice
