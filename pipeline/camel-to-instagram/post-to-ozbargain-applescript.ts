@@ -90,27 +90,27 @@ export async function postToOzBargainAppleScript(deal: ScoredDeal): Promise<stri
 
   console.log(`[ozbargain-as] Posting via AppleScript: ${titleWithPrice.slice(0, 70)}`);
 
-  // Single AppleScript call: navigate → fill → submit → return URL
+  // Single AppleScript call: navigate → wait → fill → submit → return URL
   const fullScript = `
 tell application "Google Chrome"
   activate
   open location "${OZB_FORM_URL}"
-  delay 6
-  set t to active tab of front window
-  set pageTitle to title of t
-  if pageTitle does not contain "Submit" and pageTitle does not contain "deal" then
-    return "ERROR:unexpected_title:" & pageTitle
-  end if
-  execute t javascript "var e=document.getElementById('edit-ozb_url');e.value=\\"${safeUrl}\\";e.dispatchEvent(new Event('change',{bubbles:true}))"
-  execute t javascript "var e=document.getElementById('edit-title');e.value=\\"${safeTitle}\\";e.dispatchEvent(new Event('input',{bubbles:true}))"
-  execute t javascript "var e=document.getElementById('edit-body');e.value=\\"${safeDesc}\\";e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))"
-  ${catId !== "0" ? `execute t javascript "var s=document.getElementById('edit-taxonomy-3');if(s)s.value='${catId}'"` : ""}
-  delay 2
-  execute t javascript "var vals=['edit-ozb_url','edit-title','edit-body'].map(function(id){var e=document.getElementById(id);return id+'='+e.value.length}).join(';');console.log('FIELD_LENGTHS:'+vals)"
+  set waited to 0
+  repeat
+    delay 2
+    set waited to waited + 2
+    if title of active tab of front window contains "Submit" then exit repeat
+    if waited >= 20 then return "ERROR:timeout:" & title of active tab of front window
+  end repeat
   delay 1
-  execute t javascript "var btn=document.querySelector('input.btn-primary[name=op],input[value=\\"Submit\\"][name=op]');if(btn)btn.click();"
-  delay 6
-  return URL of t
+  execute active tab of front window javascript "var e=document.getElementById('edit-ozb_url');e.value=\\"${safeUrl}\\";e.dispatchEvent(new Event('change',{bubbles:true}))"
+  execute active tab of front window javascript "var e=document.getElementById('edit-title');e.value=\\"${safeTitle}\\";e.dispatchEvent(new Event('input',{bubbles:true}))"
+  execute active tab of front window javascript "var e=document.getElementById('edit-body');e.value=\\"${safeDesc}\\";e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))"
+  ${catId !== "0" ? `execute active tab of front window javascript "var s=document.getElementById('edit-taxonomy-3');if(s)s.value='${catId}'"` : ""}
+  delay 2
+  execute active tab of front window javascript "var btn=document.querySelector('input.btn-primary[name=op]');if(btn)btn.click();"
+  delay 10
+  return URL of active tab of front window
 end tell`;
 
   const result = runAppleScript(fullScript);
@@ -124,12 +124,12 @@ end tell`;
 
   const finalUrl = result;
 
-  if (finalUrl.includes("/node/add/")) {
-    // Still on the form — check for errors
+  if (finalUrl.includes("/node/add/") || finalUrl.includes("/user/login")) {
+    // Still on form or redirected to login — check for visible errors
     const errScript = `
 tell application "Google Chrome"
   set t to active tab of front window
-  return execute t javascript "document.querySelector('.messages.error,.alert-danger')?.textContent?.trim()?.slice(0,200) || 'no error'"
+  return execute t javascript "var e=document.querySelector('.messages.error,.alert-danger,.error');e?e.innerText.trim().slice(0,200):'no error'"
 end tell`;
     const err = runAppleScript(errScript);
     throw new Error(`Form submission failed — ${err}`);
