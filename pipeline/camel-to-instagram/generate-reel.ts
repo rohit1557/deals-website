@@ -225,7 +225,7 @@ async function saveReelPost(deals: WeeklyDeal[]): Promise<void> {
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Australia/Sydney" }); // AEST YYYY-MM-DD
     const payload = deals.map((d) => ({
       slug: d.slug ?? null,
       title: truncateTitle(d.title),
