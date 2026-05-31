@@ -39,7 +39,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: pipeline/camel-to-instagram/package.json
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg google-chrome-stable xvfb
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg google-chrome-stable
       - name: Install dependencies
         env:
           PUPPETEER_SKIP_DOWNLOAD: "true"
@@ -54,7 +54,7 @@ jobs:
           else
             echo "BGMUSIC_URL not set — reel will be silent"
           fi
-      - name: Generate static deal post
+      - name: Generate static deal post + reel
         env:
           PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
           POST_TO_INSTAGRAM: "false"
@@ -64,17 +64,11 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
-          OZBARGAIN_COOKIES: ${{ secrets.OZBARGAIN_COOKIES }}
-          OZBARGAIN_PROXY: ${{ secrets.OZBARGAIN_PROXY }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           MAX_DEALS: ${{ github.event.inputs.max_deals || '1' }}
           POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
           OUTPUT_DIR: ./output
-          DISPLAY: ":99"
-        run: |
-          Xvfb :99 -screen 0 1280x900x24 &
-          sleep 1
-          npm run generate
+        run: npm run generate
       - name: Generate Reel
         continue-on-error: true
         env:
@@ -99,3 +93,24 @@ jobs:
           path: pipeline/camel-to-instagram/output/
           retention-days: 30
           if-no-files-found: warn
+
+  post-ozbargain:
+    runs-on: [self-hosted, ozbargain-mac]
+    needs: generate-posts
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    defaults:
+      run:
+        working-directory: /Users/rohit.ai/projects/deals-website/pipeline/camel-to-instagram
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: "true"
+        run: npm install
+      - name: Post to OzBargain
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
+          OZBARGAIN_COOKIES: ${{ secrets.OZBARGAIN_COOKIES }}
+          PUPPETEER_EXECUTABLE_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+        run: npx ts-node post-ozbargain-local.ts

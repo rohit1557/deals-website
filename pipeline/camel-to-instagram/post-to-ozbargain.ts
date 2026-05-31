@@ -101,8 +101,8 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
   const args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
   if (proxyServer) args.push(`--proxy-server=${proxyServer}`);
 
-  // Run non-headless when a display is available (xvfb) — real browser mode bypasses Cloudflare fingerprinting
-  const headless = !process.env.DISPLAY;
+  // Run non-headless on Mac (no DISPLAY set) — home IP + real browser = no Cloudflare block
+  const headless = !!process.env.DISPLAY; // headless only when xvfb is explicitly set (cloud)
   const browser = await (puppeteerExtra as any).launch({
     headless,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
