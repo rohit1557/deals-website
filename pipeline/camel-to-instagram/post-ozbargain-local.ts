@@ -31,17 +31,27 @@ function filterForOzBargain(deals: RawDeal[]): ScoredDeal[] {
     .sort((a, b) => b.score - a.score) as ScoredDeal[];
 }
 
+const MIN_AGE_HOURS = 3; // deals must have held their price for at least this long
+
 async function main() {
   console.log("[ozb-local] Starting OzBargain post at", new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" }));
 
-  const rawDeals = await fetchDeals();
-  let candidates = filterForOzBargain(rawDeals);
+  // Step 1: DB deals aged 3+ hours — price has proven stable, safe to post on OzBargain
+  const dbDeals = await fetchDealsFromDB();
+  const agedDbDeals = dbDeals.filter(d => {
+    const ageH = (Date.now() - d.pubDate.getTime()) / 3_600_000;
+    return ageH >= MIN_AGE_HOURS;
+  });
+  let candidates = filterForOzBargain(agedDbDeals);
+  if (candidates.length > 0) {
+    console.log(`[ozb-local] Using ${candidates.length} aged DB deals (${MIN_AGE_HOURS}h+ old)`);
+  }
 
+  // Step 2: Fall back to fresh CCC feed only if nothing aged is available
   if (candidates.length === 0) {
-    console.log("[ozb-local] No CCC deals qualify — trying DB fallback...");
-    const dbDeals = await fetchDealsFromDB();
-    const combined = [...rawDeals, ...dbDeals.filter(d => !rawDeals.find(r => r.asin === d.asin))];
-    candidates = filterForOzBargain(combined);
+    console.log(`[ozb-local] No aged DB deals — using live CCC feed (price may not hold)`);
+    const rawDeals = await fetchDeals();
+    candidates = filterForOzBargain(rawDeals);
   }
 
   if (candidates.length === 0) {
