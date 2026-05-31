@@ -10,7 +10,7 @@
 
 import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
 import { filterDeals } from "./filter-deals";
-import { postToOzBargain } from "./post-to-ozbargain";
+import { postToOzBargainAppleScript } from "./post-to-ozbargain-applescript";
 
 async function main() {
   console.log("[ozb-local] Starting OzBargain post at", new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" }));
@@ -35,11 +35,11 @@ async function main() {
   const deal = filtered.find(d => (d.dropPct ?? 0) >= 20 && d.category !== "Other") ?? filtered[0];
   console.log(`[ozb-local] Posting: [${deal.dropPct}% off] $${deal.dealPrice} — ${deal.title.slice(0, 60)}`);
 
-  const url = await postToOzBargain(deal);
+  const url = await postToOzBargainAppleScript(deal);
   if (url) {
     console.log(`[ozb-local] ✅ Posted to OzBargain: ${url}`);
   } else {
-    console.log("[ozb-local] Skipped (no cookies set or post failed)");
+    console.log("[ozb-local] Skipped");
   }
 }
 
