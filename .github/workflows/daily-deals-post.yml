@@ -66,7 +66,10 @@ jobs:
           POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
           OUTPUT_DIR: ./output
           DISPLAY: ":99"
-        run: Xvfb :99 -screen 0 1280x900x24 &amp; sleep 1 &amp;&amp; npm run generate
+        run: |
+          Xvfb :99 -screen 0 1280x900x24 &
+          sleep 1
+          npm run generate
       - name: Generate Reel
         continue-on-error: true
         env:
