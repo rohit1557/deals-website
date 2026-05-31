@@ -83,10 +83,23 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     return null;
   }
 
-  // Optional residential proxy — set OZBARGAIN_PROXY=http://user:pass@host:port
-  const proxy = process.env.OZBARGAIN_PROXY;
+  // Optional proxy — OZBARGAIN_PROXY=http://user:pass@host:port
+  // Chromium --proxy-server only accepts host:port; credentials go via page.authenticate()
+  const proxyRaw = process.env.OZBARGAIN_PROXY;
+  let proxyServer: string | undefined;
+  let proxyAuth: { username: string; password: string } | undefined;
+  if (proxyRaw) {
+    try {
+      const u = new URL(proxyRaw);
+      proxyServer = `${u.hostname}:${u.port}`;
+      if (u.username) proxyAuth = { username: decodeURIComponent(u.username), password: decodeURIComponent(u.password) };
+    } catch {
+      proxyServer = proxyRaw; // fall back to raw value if not a valid URL
+    }
+  }
+
   const args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
-  if (proxy) args.push(`--proxy-server=${proxy}`);
+  if (proxyServer) args.push(`--proxy-server=${proxyServer}`);
 
   const browser = await (puppeteerExtra as any).launch({
     headless: true,
@@ -96,6 +109,10 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
 
   try {
     const page = await browser.newPage();
+
+    // Authenticate with proxy if credentials provided
+    if (proxyAuth) await page.authenticate(proxyAuth);
+
     await page.setUserAgent(
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
     );
