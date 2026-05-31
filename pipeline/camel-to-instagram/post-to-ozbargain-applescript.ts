@@ -87,7 +87,7 @@ export async function postToOzBargainAppleScript(deal: ScoredDeal): Promise<stri
     ? `${title} - ${formatAUD(deal.dealPrice)}${deal.dropPct ? ` (${deal.dropPct}% off)` : ""}`
     : title;
   const safeTitle = esc(titleWithPrice.slice(0, 120));
-  const safeUrl   = esc(dealDropUrl(deal));   // links to dealdrop.au deal page (affiliate revenue)
+  const safeUrl   = esc(dealDropUrl(deal));   // dealdrop.au deal page — affiliate revenue on click-through
   const safeDesc  = esc(buildDescription(deal));
   const catId     = CATEGORY_MAP[deal.category] ?? "0";
 

@@ -8,31 +8,51 @@
  *   AFFILIATE_TAG       — Amazon affiliate tag (default: dealdrop0d5-22)
  */
 
+import type { RawDeal } from "./fetch-deals";
 import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
 import { filterDeals } from "./filter-deals";
+import type { ScoredDeal } from "./filter-deals";
 import { postToOzBargainAppleScript } from "./post-to-ozbargain-applescript";
+
+// OzBargain accepts all categories — broader than Instagram filter
+// Min 15% off, $15–$800, any category except obvious non-deals
+const OZB_SKIP_RE = /\b(server rack|patch panel|cable manag|ethernet switch|network switch|plumbing|valve|gasket|industrial|programming|textbook|data center)\b/i;
+
+function filterForOzBargain(deals: RawDeal[]): ScoredDeal[] {
+  const now = Date.now();
+  const passing = deals.filter(d => {
+    const drop = d.dropPct ?? 0;
+    const price = d.dealPrice ?? 0;
+    const ageH = (now - d.pubDate.getTime()) / 3_600_000;
+    return drop >= 15 && price >= 15 && price <= 800 && ageH < 48 && !OZB_SKIP_RE.test(d.title);
+  });
+  return passing
+    .map(d => ({ ...d, score: (d.dropPct ?? 0) * 2 + Math.min(d.savingsAbs ?? 0, 200) * 0.3, category: "Other" }))
+    .sort((a, b) => b.score - a.score) as ScoredDeal[];
+}
 
 async function main() {
   console.log("[ozb-local] Starting OzBargain post at", new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" }));
 
-  // Get today's top deal — same logic as the main pipeline
-  let rawDeals = await fetchDeals();
-  let filtered = filterDeals(rawDeals, 5);
+  const rawDeals = await fetchDeals();
+  let candidates = filterForOzBargain(rawDeals);
 
-  if (filtered.length === 0) {
-    console.log("[ozb-local] No CCC deals passed filter — trying DB fallback...");
+  if (candidates.length === 0) {
+    console.log("[ozb-local] No CCC deals qualify — trying DB fallback...");
     const dbDeals = await fetchDealsFromDB();
     const combined = [...rawDeals, ...dbDeals.filter(d => !rawDeals.find(r => r.asin === d.asin))];
-    filtered = filterDeals(combined, 5);
+    candidates = filterForOzBargain(combined);
   }
 
-  if (filtered.length === 0) {
-    console.log("[ozb-local] No qualifying deals today — skipping OzBargain post");
+  if (candidates.length === 0) {
+    console.log("[ozb-local] No qualifying deals today — skipping");
     process.exit(0);
   }
 
-  // Pick best deal: prefer 20%+ off, non-Other category
-  const deal = filtered.find(d => (d.dropPct ?? 0) >= 20 && d.category !== "Other") ?? filtered[0];
+  console.log(`[ozb-local] Top candidates:`);
+  candidates.slice(0, 5).forEach(d => console.log(`  [${d.dropPct}% off] $${d.dealPrice} — ${d.title.slice(0, 65)}`));
+
+  const deal = candidates[0];
   console.log(`[ozb-local] Posting: [${deal.dropPct}% off] $${deal.dealPrice} — ${deal.title.slice(0, 60)}`);
 
   const url = await postToOzBargainAppleScript(deal);
