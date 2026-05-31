@@ -115,7 +115,6 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     args,
   });
   console.log(`[ozbargain] Mode: ${isMac ? "Mac real profile (non-headless)" : "cloud ephemeral (headless)"}`);
-  console.log(`[ozbargain] Browser mode: ${headless ? "headless" : "xvfb (non-headless)"}`);
 
   try {
     const page = await browser.newPage();
