@@ -53,11 +53,14 @@ function buildDescription(deal: ScoredDeal): string {
   }
   lines.push("");
   lines.push("Fulfilled by Amazon AU. Free delivery for Prime members.");
-  const asinM = deal.amazonUrl.match(/\/dp\/([A-Z0-9]{10})/);
-  if (asinM) lines.push(`ASIN: ${asinM[1]}`);
   lines.push("");
-  lines.push("As an Amazon Associate I earn a small commission if you buy via this link, at no extra cost to you.");
+  lines.push("More daily Amazon AU deals at dealdrop.au and @dealdrop.au on Instagram.");
   return lines.join("\n");
+}
+
+function dealDropUrl(deal: ScoredDeal): string {
+  const asinM = deal.amazonUrl.match(/\/dp\/([A-Z0-9]{10})/);
+  return asinM ? `https://dealdrop.au/deals/${asinM[1]}` : cleanAmazonUrl(deal.amazonUrl);
 }
 
 function runAppleScript(script: string): string {
@@ -84,7 +87,7 @@ export async function postToOzBargainAppleScript(deal: ScoredDeal): Promise<stri
     ? `${title} - ${formatAUD(deal.dealPrice)}${deal.dropPct ? ` (${deal.dropPct}% off)` : ""}`
     : title;
   const safeTitle = esc(titleWithPrice.slice(0, 120));
-  const safeUrl   = esc(cleanAmazonUrl(deal.amazonUrl));
+  const safeUrl   = esc(dealDropUrl(deal));   // links to dealdrop.au deal page (affiliate revenue)
   const safeDesc  = esc(buildDescription(deal));
   const catId     = CATEGORY_MAP[deal.category] ?? "0";
 

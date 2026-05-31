@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
-import { ArrowLeft, Tag, Clock } from "lucide-react";
+import { ArrowLeft, Tag, Clock, Instagram, TrendingDown } from "lucide-react";
 import AffiliateButton from "@/components/AffiliateButton";
+
+export const revalidate = 1800;
 
 const BASE_URL = "https://dealdrop.au";
 const UUID_RE  = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -35,8 +37,17 @@ function formatPrice(price: number, currency: string) {
   }).format(price);
 }
 
+const ASIN_RE = /^[A-Z0-9]{10}$/;
+
 async function getDeal(slug: string) {
   if (UUID_RE.test(slug)) return db.deal.findUnique({ where: { id: slug } });
+  // ASIN lookup — OzBargain links use /deals/B0ABCDEF12 format
+  if (ASIN_RE.test(slug)) {
+    return db.deal.findFirst({
+      where: { url: { contains: `/dp/${slug}` }, isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+  }
   return db.deal.findUnique({ where: { slug } });
 }
 
@@ -115,6 +126,8 @@ export default async function DealPage({ params }: Props) {
     },
   };
 
+  const savings = originalPrice && dealPrice ? originalPrice - dealPrice : null;
+
   return (
     <>
       <script
@@ -124,35 +137,59 @@ export default async function DealPage({ params }: Props) {
 
       <div className="max-w-2xl mx-auto">
         <a href="/" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-blue-600 mb-6">
-          <ArrowLeft className="h-4 w-4" /> Back to deals
+          <ArrowLeft className="h-4 w-4" /> All deals
         </a>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          {/* Product image */}
           {deal.imageUrl && (
-            <div className="h-64 bg-gray-50 flex items-center justify-center p-8">
+            <div className="bg-gray-50 flex items-center justify-center p-8 h-64">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={deal.imageUrl} alt={deal.title} className="h-full object-contain" />
             </div>
           )}
 
-          <div className="p-6 space-y-4">
-            <h1 className="text-xl font-bold text-gray-900">{deal.title}</h1>
+          <div className="p-6 space-y-5">
+            {/* Category + source */}
+            <div className="flex flex-wrap gap-2 text-xs">
+              {deal.category && (
+                <span className="flex items-center gap-1 bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                  <Tag className="h-3 w-3" /> {deal.category}
+                </span>
+              )}
+              {deal.source && (
+                <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full capitalize">
+                  via {deal.source}
+                </span>
+              )}
+            </div>
 
-            <div className="flex items-baseline gap-3 flex-wrap">
-              {dealPrice != null && (
-                <span className="text-3xl font-bold text-green-600">
-                  {formatPrice(dealPrice, currency)}
-                </span>
-              )}
-              {originalPrice != null && originalPrice > (dealPrice ?? 0) && (
-                <span className="text-lg text-gray-400 line-through">
-                  {formatPrice(originalPrice, currency)}
-                </span>
-              )}
-              {discountPct != null && discountPct > 0 && (
-                <span className="bg-red-100 text-red-600 text-sm font-bold px-2 py-0.5 rounded-full">
-                  -{Math.round(discountPct)}%
-                </span>
+            <h1 className="text-xl font-bold text-gray-900 leading-snug">{deal.title}</h1>
+
+            {/* Price block */}
+            <div className="bg-green-50 rounded-xl p-4 space-y-1">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                {dealPrice != null && (
+                  <span className="text-4xl font-bold text-green-700">
+                    {formatPrice(dealPrice, currency)}
+                  </span>
+                )}
+                {originalPrice != null && originalPrice > (dealPrice ?? 0) && (
+                  <span className="text-xl text-gray-400 line-through">
+                    {formatPrice(originalPrice, currency)}
+                  </span>
+                )}
+                {discountPct != null && discountPct > 0 && (
+                  <span className="bg-red-500 text-white text-sm font-bold px-2.5 py-1 rounded-full">
+                    -{Math.round(discountPct)}% OFF
+                  </span>
+                )}
+              </div>
+              {savings != null && savings > 0 && (
+                <p className="flex items-center gap-1 text-sm text-green-700 font-medium">
+                  <TrendingDown className="h-4 w-4" />
+                  You save {formatPrice(savings, currency)} on this deal
+                </p>
               )}
             </div>
 
@@ -160,23 +197,14 @@ export default async function DealPage({ params }: Props) {
               <p className="text-sm text-gray-600 leading-relaxed">{deal.description}</p>
             )}
 
-            <div className="flex flex-wrap gap-3 text-sm text-gray-500">
-              {deal.category && (
-                <span className="flex items-center gap-1">
-                  <Tag className="h-4 w-4" /> {deal.category}
-                </span>
-              )}
-              {deal.source && (
-                <span className="capitalize">via {deal.source}</span>
-              )}
-              {deal.expiresAt && (
-                <span className="flex items-center gap-1 text-amber-500">
-                  <Clock className="h-4 w-4" />
-                  Expires {new Date(deal.expiresAt).toLocaleDateString()}
-                </span>
-              )}
-            </div>
+            {deal.expiresAt && (
+              <p className="flex items-center gap-1.5 text-sm text-amber-600">
+                <Clock className="h-4 w-4" />
+                Deal expires {new Date(deal.expiresAt).toLocaleDateString("en-AU")}
+              </p>
+            )}
 
+            {/* Main CTA */}
             <AffiliateButton
               href={outUrl}
               dealId={deal.id}
@@ -188,9 +216,35 @@ export default async function DealPage({ params }: Props) {
             />
 
             <p className="text-center text-xs text-gray-400">
-              Affiliate link · Price may have changed · Always verify on the retailer site
+              #ad · As an Amazon Associate we earn from qualifying purchases · Price may vary
             </p>
           </div>
+        </div>
+
+        {/* Instagram CTA */}
+        <div className="mt-6 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-100 rounded-2xl p-5 flex items-center gap-4">
+          <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl p-2.5 shrink-0">
+            <Instagram className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800">Get daily deals on Instagram</p>
+            <p className="text-xs text-gray-500">Follow @dealdrop.au for the best Amazon AU price drops every day</p>
+          </div>
+          <a
+            href="https://instagram.com/dealdrop.au"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold px-4 py-2 rounded-full whitespace-nowrap"
+          >
+            Follow
+          </a>
+        </div>
+
+        {/* More deals link */}
+        <div className="mt-4 text-center">
+          <a href="/" className="text-sm text-blue-600 hover:underline">
+            Browse all deals on DealDrop AU →
+          </a>
         </div>
       </div>
     </>
