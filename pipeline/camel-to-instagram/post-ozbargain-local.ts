@@ -8,18 +8,9 @@
  *   AFFILIATE_TAG       — Amazon affiliate tag (default: dealdrop0d5-22)
  */
 
-import "dotenv/config";
-import path from "path";
 import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
 import { filterDeals } from "./filter-deals";
 import { postToOzBargain } from "./post-to-ozbargain";
-
-// Load .env.local from project root if no DATABASE_URL set
-if (!process.env.DATABASE_URL) {
-  try {
-    require("dotenv").config({ path: path.resolve(__dirname, "../../.env.local") });
-  } catch {}
-}
 
 async function main() {
   console.log("[ozb-local] Starting OzBargain post at", new Date().toLocaleString("en-AU", { timeZone: "Australia/Sydney" }));
