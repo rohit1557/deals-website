@@ -101,11 +101,14 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
   const args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
   if (proxyServer) args.push(`--proxy-server=${proxyServer}`);
 
+  // Run non-headless when a display is available (xvfb) — real browser mode bypasses Cloudflare fingerprinting
+  const headless = !process.env.DISPLAY;
   const browser = await (puppeteerExtra as any).launch({
-    headless: true,
+    headless,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
     args,
   });
+  console.log(`[ozbargain] Browser mode: ${headless ? "headless" : "xvfb (non-headless)"}`);
 
   try {
     const page = await browser.newPage();

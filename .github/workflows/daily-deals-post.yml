@@ -34,7 +34,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: pipeline/camel-to-instagram/package.json
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg google-chrome-stable
+        run: sudo apt-get update && sudo apt-get install -y --fix-missing ffmpeg google-chrome-stable xvfb
       - name: Install dependencies
         env:
           PUPPETEER_SKIP_DOWNLOAD: "true"
@@ -65,7 +65,8 @@ jobs:
           MAX_DEALS: ${{ github.event.inputs.max_deals || '1' }}
           POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
           OUTPUT_DIR: ./output
-        run: npm run generate
+          DISPLAY: ":99"
+        run: Xvfb :99 -screen 0 1280x900x24 &amp; sleep 1 &amp;&amp; npm run generate
       - name: Generate Reel
         continue-on-error: true
         env:
