@@ -17,6 +17,11 @@ on:
         required: false
         default: "false"
         type: boolean
+      skip_reel:
+        description: "Skip reel TryPost only (still posts to OzBargain)"
+        required: false
+        default: "false"
+        type: boolean
 permissions:
   contents: read
 
@@ -84,6 +89,7 @@ jobs:
           CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
           TRYPOST_API_TOKEN: ${{ secrets.TRYPOST_API_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          SKIP_REEL: ${{ github.event.inputs.skip_reel || 'false' }}
         run: npm run generate:reel
       - name: Upload deal posts as artifact
         uses: actions/upload-artifact@v4
