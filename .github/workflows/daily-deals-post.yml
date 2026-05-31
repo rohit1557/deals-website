@@ -60,6 +60,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
           OZBARGAIN_COOKIES: ${{ secrets.OZBARGAIN_COOKIES }}
+          OZBARGAIN_PROXY: ${{ secrets.OZBARGAIN_PROXY }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
           MAX_DEALS: ${{ github.event.inputs.max_deals || '1' }}
           POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
