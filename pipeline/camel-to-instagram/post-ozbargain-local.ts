@@ -49,10 +49,15 @@ async function main() {
     process.exit(0);
   }
 
-  console.log(`[ozb-local] Top candidates:`);
-  candidates.slice(0, 5).forEach(d => console.log(`  [${d.dropPct}% off] $${d.dealPrice} — ${d.title.slice(0, 65)}`));
+  // Skip ASINs that were recently removed by OzBargain moderators
+  const SKIP_ASINS = new Set((process.env.OZB_SKIP_ASINS ?? "").split(",").filter(Boolean));
+  const filtered2 = candidates.filter(d => !SKIP_ASINS.has(d.asin));
+  if (filtered2.length === 0) { console.log("[ozb-local] All candidates skipped"); process.exit(0); }
 
-  const deal = candidates[0];
+  console.log(`[ozb-local] Top candidates:`);
+  filtered2.slice(0, 5).forEach(d => console.log(`  [${d.dropPct}% off] $${d.dealPrice} — ${d.title.slice(0, 65)}`));
+
+  const deal = filtered2[0];
   console.log(`[ozb-local] Posting: [${deal.dropPct}% off] $${deal.dealPrice} — ${deal.title.slice(0, 60)}`);
 
   const url = await postToOzBargainAppleScript(deal);
