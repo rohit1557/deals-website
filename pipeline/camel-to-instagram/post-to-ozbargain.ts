@@ -98,16 +98,23 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     }
   }
 
-  const args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"];
+  const args = ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--no-first-run"];
   if (proxyServer) args.push(`--proxy-server=${proxyServer}`);
 
-  // Run non-headless on Mac (no DISPLAY set) — home IP + real browser = no Cloudflare block
-  const headless = !!process.env.DISPLAY; // headless only when xvfb is explicitly set (cloud)
+  // On Mac: use the real Chrome profile so cf_clearance + session cookies are already present.
+  // On cloud (DISPLAY set via xvfb): use ephemeral profile + manual cookie injection.
+  const isMac = process.platform === "darwin" && !process.env.DISPLAY;
+  const userDataDir = isMac
+    ? `${process.env.HOME}/Library/Application Support/Google/Chrome`
+    : undefined;
+
   const browser = await (puppeteerExtra as any).launch({
-    headless,
+    headless: !isMac,
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+    userDataDir,
     args,
   });
+  console.log(`[ozbargain] Mode: ${isMac ? "Mac real profile (non-headless)" : "cloud ephemeral (headless)"}`);
   console.log(`[ozbargain] Browser mode: ${headless ? "headless" : "xvfb (non-headless)"}`);
 
   try {
@@ -121,10 +128,13 @@ export async function postToOzBargain(deal: ScoredDeal): Promise<string | null> 
     );
     await page.setViewport({ width: 1280, height: 900 });
 
-    // ── Step 1: Restore session via cookies ────────────────────────────────
-    // Navigate to domain first so cookies can be set
-    await page.goto(`${OZB_BASE}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
-    await page.setCookie(...(cookies as unknown as Parameters<typeof page.setCookie>));
+    // ── Step 1: Restore session ────────────────────────────────────────────
+    // Mac real profile already has cf_clearance + session cookies — skip injection.
+    // Cloud ephemeral profile needs manual cookie injection.
+    if (!isMac && cookies.length > 0) {
+      await page.goto(`${OZB_BASE}/`, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      await page.setCookie(...(cookies as unknown as Parameters<typeof page.setCookie>));
+    }
 
     // Navigate to the submit form — give extra time for Cloudflare JS challenge to resolve
     await page.goto(`${OZB_BASE}/node/add/bargain`, { waitUntil: "domcontentloaded", timeout: 30_000 });
