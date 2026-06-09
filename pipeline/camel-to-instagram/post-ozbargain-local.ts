@@ -9,8 +9,8 @@
  */
 
 import type { RawDeal } from "./fetch-deals";
-import { fetchDeals, fetchDealsFromDB } from "./fetch-deals";
-import { filterDeals } from "./filter-deals";
+import { fetchDealsFromDB } from "./fetch-deals";
+import { filterDeals, guessCategory } from "./filter-deals";
 import type { ScoredDeal } from "./filter-deals";
 import { postToOzBargainAppleScript } from "./post-to-ozbargain-applescript";
 
@@ -27,7 +27,7 @@ function filterForOzBargain(deals: RawDeal[]): ScoredDeal[] {
     return drop >= 15 && price >= 15 && price <= 800 && ageH < 48 && !OZB_SKIP_RE.test(d.title);
   });
   return passing
-    .map(d => ({ ...d, score: (d.dropPct ?? 0) * 2 + Math.min(d.savingsAbs ?? 0, 200) * 0.3, category: "Other" }))
+    .map(d => ({ ...d, score: (d.dropPct ?? 0) * 2 + Math.min(d.savingsAbs ?? 0, 200) * 0.3, category: guessCategory(d.title) }))
     .sort((a, b) => b.score - a.score) as ScoredDeal[];
 }
 
@@ -42,22 +42,15 @@ async function main() {
     const ageH = (Date.now() - d.pubDate.getTime()) / 3_600_000;
     return ageH >= MIN_AGE_HOURS;
   });
-  let candidates = filterForOzBargain(agedDbDeals);
-  if (candidates.length > 0) {
-    console.log(`[ozb-local] Using ${candidates.length} aged DB deals (${MIN_AGE_HOURS}h+ old)`);
-  }
+  const candidates = filterForOzBargain(agedDbDeals);
 
-  // Step 2: Fall back to fresh CCC feed only if nothing aged is available
+  // Only post DB deals — they have dealdrop.au landing pages and proven stable prices.
+  // CCC-only deals have no landing page so the posted URL would be a blank page.
   if (candidates.length === 0) {
-    console.log(`[ozb-local] No aged DB deals — using live CCC feed (price may not hold)`);
-    const rawDeals = await fetchDeals();
-    candidates = filterForOzBargain(rawDeals);
-  }
-
-  if (candidates.length === 0) {
-    console.log("[ozb-local] No qualifying deals today — skipping");
+    console.log("[ozb-local] No qualifying aged DB deals — skipping");
     process.exit(0);
   }
+  console.log(`[ozb-local] Using ${candidates.length} aged DB deals (${MIN_AGE_HOURS}h+ old)`);
 
   // Skip ASINs that were recently removed by OzBargain moderators
   const SKIP_ASINS = new Set((process.env.OZB_SKIP_ASINS ?? "").split(",").filter(Boolean));

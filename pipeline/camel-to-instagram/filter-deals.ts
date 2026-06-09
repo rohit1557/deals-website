@@ -18,9 +18,10 @@ export interface ScoredDeal extends RawDeal {
   category: string;
 }
 
-function guessCategory(title: string): string {
+export function guessCategory(title: string): string {
   const t = title.toLowerCase();
   if (/\b(perfume|cologne|fragrance|eau\s*de|toilette|parfum)\b/.test(t))                                                          return "Fragrance";
+  if (/\b(napp(y|ies)|diaper|baby|infant|toddler|pram|stroller|bassinet|baby\s*wipe)\b/.test(t))                                   return "Baby";
   if (/\b(skincare|moisturis|moisturiz|serum|lipstick|mascara|foundation|blush|concealer|shampoo|conditioner|hair\s*care|nail\s*polish|sunscreen|spf)\b/.test(t)) return "Beauty";
   if (/\b(shirt|pants|dress|shoes?|jacket|jeans|hoodie|sneakers?|boots?|socks?|underwear|bra|leggings?|activewear|swimwear|watch|handbag|purse)\b/.test(t))        return "Fashion";
   if (/\b(game|gaming|controller|console|playstation|xbox|nintendo|steam|headsets?|mechanical\s*keyboard|keycaps?|mousepad|gpu|graphics\s*card)\b/.test(t))        return "Gaming";

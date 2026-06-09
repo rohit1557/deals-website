@@ -4,24 +4,25 @@ import type { ScoredDeal } from "./filter-deals";
 const OZB_FORM_URL = "https://www.ozbargain.com.au/node/add/ozbdeal";
 
 const CATEGORY_MAP: Record<string, string> = {
-  Tech:      "13", // Electrical & Electronics
-  Gaming:    "32155",
-  Fashion:   "8",  // Fashion & Apparel
-  Beauty:    "18", // Health & Beauty
-  Home:      "19", // Home & Garden
-  Kitchen:   "19", // Home & Garden
-  Fragrance: "18", // Health & Beauty
-  Travel:    "0",
-  Other:     "0",
+  Tech:      "Electrical & Electronics",
+  Gaming:    "Gaming",
+  Fashion:   "Clothing & Accessories",
+  Beauty:    "Health & Beauty",
+  Baby:      "Health & Beauty",
+  Home:      "Home & Garden",
+  Kitchen:   "Home & Garden",
+  Fragrance: "Health & Beauty",
+  Travel:    "Travel",
+  Other:     "Misc",
 };
 
 function esc(s: string): string {
-  // Escape for embedding in AppleScript double-quoted string → JavaScript string
-  // Newlines must become \n (JS escape), real quotes must be escaped
+  // Embed short single-line strings (title, URL) in AppleScript double-quoted JS strings.
+  // AppleScript recognises \" and \\ but NOT \n or \u — use encodeURIComponent for multiline.
   return s
     .replace(/\\/g, "\\\\")
     .replace(/"/g, '\\"')
-    .replace(/\n/g, "\\n")
+    .replace(/\n/g, " ")
     .replace(/\r/g, "");
 }
 
@@ -54,13 +55,16 @@ function buildDescription(deal: ScoredDeal): string {
   lines.push("");
   lines.push("Fulfilled by Amazon AU. Free delivery for Prime members.");
   lines.push("");
-  lines.push("More daily Amazon AU deals at dealdrop.au and @dealdrop.au on Instagram.");
+  lines.push("More deals at dealdrop.au — follow @dealdrop.au on Instagram for daily drops.");
+  lines.push("");
+  lines.push("Disclosure: I operate dealdrop.au, an automated Amazon AU deal tracker. As an Amazon Associate I earn a commission if you buy via my links, at no extra cost to you.");
   return lines.join("\n");
 }
 
 function dealDropUrl(deal: ScoredDeal): string {
-  const asinM = deal.amazonUrl.match(/\/dp\/([A-Z0-9]{10})/);
-  return asinM ? `https://dealdrop.au/deals/${asinM[1]}` : cleanAmazonUrl(deal.amazonUrl);
+  // OzBargain requires a direct product link — no affiliate redirects or intermediary sites.
+  // dealdrop.au mention stays in the description text, not as the deal URL.
+  return cleanAmazonUrl(deal.amazonUrl);
 }
 
 function runAppleScript(script: string): string {
@@ -87,9 +91,10 @@ export async function postToOzBargainAppleScript(deal: ScoredDeal): Promise<stri
     ? `${title} - ${formatAUD(deal.dealPrice)}${deal.dropPct ? ` (${deal.dropPct}% off)` : ""}`
     : title;
   const safeTitle = esc(titleWithPrice.slice(0, 120));
-  const safeUrl   = esc(dealDropUrl(deal));   // dealdrop.au deal page — affiliate revenue on click-through
-  const safeDesc  = esc(buildDescription(deal));
-  const catId     = CATEGORY_MAP[deal.category] ?? "0";
+  const safeUrl   = esc(dealDropUrl(deal));
+  // URL-encode so the string is pure ASCII — avoids AppleScript escape issues with \n, \u, Unicode
+  const descEncoded = encodeURIComponent(buildDescription(deal));
+  const ozbCategory = CATEGORY_MAP[deal.category] ?? "Misc";
 
   console.log(`[ozbargain-as] Posting via AppleScript: ${titleWithPrice.slice(0, 70)}`);
 
@@ -108,8 +113,8 @@ tell application "Google Chrome"
   delay 1
   execute active tab of front window javascript "var e=document.getElementById('edit-ozb_url');e.value=\\"${safeUrl}\\";e.dispatchEvent(new Event('change',{bubbles:true}))"
   execute active tab of front window javascript "var e=document.getElementById('edit-title');e.value=\\"${safeTitle}\\";e.dispatchEvent(new Event('input',{bubbles:true}))"
-  execute active tab of front window javascript "var e=document.getElementById('edit-body');e.value=\\"${safeDesc}\\";e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))"
-  ${catId !== "0" ? `execute active tab of front window javascript "var s=document.getElementById('edit-taxonomy-3');if(s)s.value='${catId}'"` : ""}
+  execute active tab of front window javascript "document.getElementById('edit-body').value=decodeURIComponent(\\"${descEncoded}\\")"
+  execute active tab of front window javascript "var cat='${ozbCategory}';var s=document.getElementById('edit-taxonomy-3');if(s&&cat){for(var i=0;i<s.options.length;i++){if(s.options[i].text.indexOf(cat)>=0){s.value=s.options[i].value;break;}}}"
   delay 2
   execute active tab of front window javascript "var btn=document.querySelector('input.btn-primary[name=op]');if(btn)btn.click();"
   delay 10

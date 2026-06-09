@@ -1,7 +1,5 @@
 name: Daily Instagram Deals Post
 on:
-  schedule:
-    - cron: "0 22 * * *"
   workflow_dispatch:
     inputs:
       max_deals:
