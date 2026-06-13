@@ -1,5 +1,7 @@
 name: Daily Instagram Deals Post
 on:
+  schedule:
+    - cron: "0 23 * * *"  # 9am AEST (UTC+10)
   workflow_dispatch:
     inputs:
       max_deals:
@@ -16,7 +18,7 @@ on:
         default: "false"
         type: boolean
       skip_reel:
-        description: "Skip reel TryPost only (still posts to OzBargain)"
+        description: "Skip reel posting"
         required: false
         default: "false"
         type: boolean
@@ -52,7 +54,7 @@ jobs:
           else
             echo "BGMUSIC_URL not set — reel will be silent"
           fi
-      - name: Generate static deal post + reel
+      - name: Generate static deal post
         env:
           PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
           POST_TO_INSTAGRAM: "false"
@@ -67,7 +69,7 @@ jobs:
           POST_TYPE: ${{ github.event.inputs.post_type || 'single' }}
           OUTPUT_DIR: ./output
         run: npm run generate
-      - name: Generate Reel
+      - name: Generate and post Reel
         continue-on-error: true
         env:
           PUPPETEER_EXECUTABLE_PATH: /usr/bin/google-chrome-stable
@@ -91,24 +93,3 @@ jobs:
           path: pipeline/camel-to-instagram/output/
           retention-days: 30
           if-no-files-found: warn
-
-  post-ozbargain:
-    runs-on: [self-hosted, ozbargain-mac]
-    needs: generate-posts
-    if: ${{ github.event.inputs.dry_run != 'true' }}
-    defaults:
-      run:
-        working-directory: /Users/rohit.ai/projects/deals-website/pipeline/camel-to-instagram
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: "true"
-        run: npm install
-      - name: Post to OzBargain
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AFFILIATE_TAG: ${{ secrets.AFFILIATE_TAG || 'dealdrop0d5-22' }}
-          OZBARGAIN_COOKIES: ${{ secrets.OZBARGAIN_COOKIES }}
-          PUPPETEER_EXECUTABLE_PATH: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
-        run: npx ts-node post-ozbargain-local.ts
